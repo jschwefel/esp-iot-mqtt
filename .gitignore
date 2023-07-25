@@ -1,0 +1,8 @@
+.vscode/
+build/
+*.bin
+*.old
+*.log
+*.orig
+cmake-build-*/
+
