@@ -107,7 +107,7 @@ void iot_config_gpio_interrupt(gpio_num_t intrPin, void* intrISR)
         printf("LED Control Task FAILED.\n");
     }
     
-    ESP_ERROR_CHECK(gpio_isr_handler_add(intrPin, iot_gpio_isr_handler, (void *)intrParams));
+    ESP_ERROR_CHECK(gpio_isr_handler_add(intrPin, iot_gpio_isr_handler, (void *)intrParams->intrPin));
 
     
 
@@ -117,3 +117,53 @@ void iot_config_gpio_interrupt(gpio_num_t intrPin, void* intrISR)
 }
 
 
+esp_err_t iot_intr_gpio_setup(gpio_num_t intrPin, iot_gpio_pull_t intrPull, 
+                                gpio_int_type_t intrType, void* intrISR,
+                                gpio_num_t outPin, iot_gpio_pull_t outPull)
+{
+    // Confiure pins.
+
+    // Pretty sure there is a better way. But for now, it works.
+    bool intrPullUp = ((intrPull == 0) || (intrPull == 2)) ? true : false;
+    bool intrPullDown = ((intrPull == 1) || (intrPull == 2)) ? true : false;
+    bool outPullUp = ((outPull == 0) || (intrPull == 2)) ? true : false;
+    bool outPullDown = ((outPull == 1) || (intrPull == 2)) ? true : false;
+
+    gpio_config_t* intrPinConfig = iot_set_gpio_intr_pin_config(intrPin, GPIO_MODE_INPUT, intrPullUp, intrPullDown, intrType);
+    ESP_ERROR_CHECK(gpio_config(intrPinConfig));
+    free(intrPinConfig);
+
+    gpio_config_t* outPinConfig = iot_set_gpio_intr_pin_config(outPin, GPIO_MODE_OUTPUT, outPullUp, outPullDown, GPIO_INTR_DISABLE);
+    ESP_ERROR_CHECK(gpio_config(outPinConfig));
+    free(outPinConfig);
+
+    // Configure GLitch Filter on interrupt pin.
+
+    gpio_pin_glitch_filter_config_t* glitchFilterConfig = malloc(sizeof(gpio_pin_glitch_filter_config_t));
+    glitchFilterConfig->clk_src = 4; // SOC_MOD_CLK_PLL_F80M
+    glitchFilterConfig->gpio_num = intrPin;
+    gpio_glitch_filter_handle_t* glitchFilter = malloc(sizeof(gpio_glitch_filter_handle_t));
+    ESP_ERROR_CHECK(gpio_new_pin_glitch_filter(glitchFilterConfig, glitchFilter));
+    ESP_ERROR_CHECK(gpio_glitch_filter_enable(*glitchFilter));
+
+    // Configure the interrup
+
+    iot_intr_params_t* intrParams = malloc(sizeof(iot_intr_params_t));
+    intrParams->intrPin = intrPin;
+    intrParams->intrFunc = intrISR;
+
+    ESP_LOGE(TAG, "Params passed from 'iot_gpio_control_task' -- Pin: %i\tFunc: %i", intrParams->intrPin, (int)intrParams->intrFunc );
+
+    BaseType_t xReturned = xTaskCreate(iot_gpio_control_task, "IOT_GPIO_Control_Task", 2048, intrParams, 1, NULL);
+    if(xReturned == pdPASS) {
+        ESP_LOGI(TAG, "Interrupt Task in FreeRTOS created.");
+    } else {
+        ESP_LOGE(TAG, "Interrupt Task in FreeRTOS creation FAILED.");
+    }
+    
+    ESP_ERROR_CHECK(gpio_isr_handler_add(intrPin, iot_gpio_isr_handler, (void *)intrParams->intrPin));
+
+    return ESP_OK;
+
+
+}

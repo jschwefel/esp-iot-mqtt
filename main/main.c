@@ -8,12 +8,12 @@
 #include "esp_log.h"
 
 
-void iot_gpio_intr_pin0(void *params)
+void iot_gpio_intr_pin(void *params)
 {
     iot_intr_params_t* intrParams = (iot_intr_params_t*) params;
-    ESP_LOGE(TAG, "Params passed from 'iot_gpio_intr_pin0' -- Pin: %i\tFunc: %i", intrParams->intrPin, (int)intrParams->intrFunc );
+    //ESP_LOGE(TAG, "Params passed from 'iot_gpio_intr_pin' -- Pin: %i\tFunc: %i", intrParams->intrPin, (int)intrParams->intrFunc );
     if (xQueueReceive(interruptQueue, &intrParams->intrPin, portMAX_DELAY)) {
-        ESP_LOGI(TAG, "Hit 0");
+        ESP_LOGI(TAG, "Hit 0 -- Input Level: %i\tOutput Level: %i", gpio_get_level(GPIO_NUM_0), gpio_get_level(GPIO_NUM_1));
         gpio_set_level(GPIO_NUM_1, !gpio_get_level(GPIO_NUM_0));
     }
 }
@@ -22,9 +22,9 @@ void iot_gpio_intr_pin0(void *params)
 void iot_gpio_intr_pin2(void *params)
 {
     iot_intr_params_t* intrParams = (iot_intr_params_t*) params;
-    ESP_LOGE(TAG, "Params passed from 'iot_gpio_intr_pin1' -- Pin: %i\tFunc: %i", intrParams->intrPin, (int)intrParams->intrFunc );
+    //ESP_LOGE(TAG, "Params passed from 'iot_gpio_intr_pin1' -- Pin: %i\tFunc: %i", intrParams->intrPin, (int)intrParams->intrFunc );
     if (xQueueReceive(interruptQueue, &intrParams->intrPin, portMAX_DELAY)) {
-        ESP_LOGI(TAG, "Hit 2");
+        //ESP_LOGI(TAG, "Hit 2");
         gpio_set_level(GPIO_NUM_3, !gpio_get_level(GPIO_NUM_2));
     }
 }
@@ -35,15 +35,22 @@ void app_main(void)
     globals_init();
     //init_wifi();
 
+    iot_intr_gpio_setup(GPIO_NUM_0, IOT_GPIO_PULL_UP, 
+                        GPIO_INTR_ANYEDGE, iot_gpio_intr_pin, 
+                        GPIO_NUM_1, IOT_GPIO_PULL_DOWN);
 
-    iot_intr_pin_config(GPIO_NUM_0, GPIO_MODE_INPUT, true, false, GPIO_INTR_ANYEDGE);
-    iot_io_pin_config(GPIO_NUM_1, GPIO_MODE_OUTPUT, false, true);
-    iot_config_gpio_interrupt(GPIO_NUM_0, iot_gpio_intr_pin0);
+    iot_intr_gpio_setup(GPIO_NUM_2, IOT_GPIO_PULL_UP, 
+                        GPIO_INTR_ANYEDGE, iot_gpio_intr_pin, 
+                        GPIO_NUM_3, IOT_GPIO_PULL_DOWN);
+
+//    iot_intr_pin_config(GPIO_NUM_0, GPIO_MODE_INPUT, true, false, GPIO_INTR_ANYEDGE);
+//    iot_io_pin_config(GPIO_NUM_1, GPIO_MODE_OUTPUT, false, true);
+//    iot_config_gpio_interrupt(GPIO_NUM_0, iot_gpio_intr_pin);
 
  
-    iot_intr_pin_config(GPIO_NUM_2, GPIO_MODE_INPUT, true, false, GPIO_INTR_ANYEDGE);
-    iot_io_pin_config(GPIO_NUM_3, GPIO_MODE_OUTPUT, false, true);
-    iot_config_gpio_interrupt(GPIO_NUM_2, iot_gpio_intr_pin2);
+//    iot_intr_pin_config(GPIO_NUM_2, GPIO_MODE_INPUT, true, false, GPIO_INTR_ANYEDGE);
+//    iot_io_pin_config(GPIO_NUM_3, GPIO_MODE_OUTPUT, false, true);
+//    iot_config_gpio_interrupt(GPIO_NUM_2, iot_gpio_intr_pin2);
 
 
     return;
