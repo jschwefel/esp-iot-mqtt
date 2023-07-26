@@ -1,6 +1,7 @@
 #include "iot_globals.h"
 #include "iot_value_defines.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdbool.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
@@ -35,6 +36,7 @@ static void iot_gpio_control_task(void *params)
     iot_isr_params_t* intrParams = (iot_isr_params_t*) params;
     while (true)
     {
+        ESP_LOGI(TAG, "Control Task' -- \tParam: %i", (int)params);
         // Call the intr task handler function, passing all params
         intrParams->intrFunc(params);
     }    
@@ -46,8 +48,10 @@ static void iot_gpio_intr_task_handler(void *params)
 {
     iot_isr_params_t* intrParams = (iot_isr_params_t*) params;
     if (xQueueReceive(interruptQueue, &intrParams->intrPin, portMAX_DELAY)) {
+        ESP_LOGI(TAG, "Params passed from 'iot_gpio_intr_pin' -- intrPin: %i\toutPin: %i\tParam: %i", intrParams->intrPin, intrParams->outPin, (int)intrParams);
         uint32_t level = intrParams->outInvert ? !gpio_get_level(intrParams->intrPin) : gpio_get_level(intrParams->intrPin);
-        gpio_set_level(intrParams->outPin, level);
+        
+        gpio_set_level(intrParams->outPin, gpio_get_level(intrParams->intrPin));
     }
 }
 
@@ -95,16 +99,20 @@ esp_err_t iot_intr_gpio_setup(iot_intr_config_t intrConfig)
     ESP_ERROR_CHECK(gpio_new_pin_glitch_filter(glitchFilterConfig, glitchFilter));
     ESP_ERROR_CHECK(gpio_glitch_filter_enable(*glitchFilter));
 
-    // Configure the interrup
+    // Configure the interrupt
 
     iot_isr_params_t* intrParams = malloc(sizeof(iot_isr_params_t));
     intrParams->intrFunc = &iot_gpio_intr_task_handler;
     intrParams->intrPin = intrConfig.intrPin;
     intrParams->outPin = intrConfig.outPin;
+    intrParams->outInvert = intrConfig.intrISR.outInvert;
+    intrParams->mqttSubTopic = intrConfig.intrISR.mqttSubTopic;
+    intrParams->mqttDataHigh = intrConfig.intrISR.mqttDataHigh;
+    intrParams->mqttDataLow = intrConfig.intrISR.mqttDataLow;
 
-    ESP_LOGE(TAG, "Params passed from 'iot_gpio_control_task' -- Pin: %i\tFunc: %i", intrParams->intrPin, (int)intrParams->intrFunc );
+    ESP_LOGE(TAG, "Params passed from 'iot_gpio_control_task' -- Pin: %i\tFunc: %i\t%i", intrParams->intrPin, (int)intrParams->intrFunc, (int)intrParams);
 
-    BaseType_t xReturned = xTaskCreate(iot_gpio_control_task, "IOT_GPIO_Control_Task", 2048, intrParams, 1, NULL);
+    BaseType_t xReturned = xTaskCreate(iot_gpio_control_task, intrConfig.intrTaskName, 2048, (void*)intrParams, 1, NULL);
     if(xReturned == pdPASS) {
         ESP_LOGI(TAG, "Interrupt Task in FreeRTOS created.");
     } else {

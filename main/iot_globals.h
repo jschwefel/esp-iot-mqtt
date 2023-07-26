@@ -38,6 +38,7 @@ typedef struct {
 } iot_isr_config_t;
 
 typedef struct {
+    char* intrTaskName;
     gpio_num_t intrPin;
     iot_gpio_pull_t intrPull;
     gpio_int_type_t intrType; 
