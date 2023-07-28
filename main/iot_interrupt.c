@@ -11,47 +11,34 @@
 #include "driver/gpio_filter.h"
 #include "iot_interrupt.h"
 
-#include "hal/gpio_ll.h"
-#include "esp_sleep.h"
+//#include "hal/gpio_ll.h"
+//#include "esp_sleep.h"
 #include "esp_log.h"
-//#include "log.h"
-//#include "mqtt.h"
 
 
 
-static void iot_gpio_intr_task_handler(void *params);
-static void iot_gpio_isr_handler(void* arg);
-static void iot_gpio_intr_task_handler(void *params);
+static void iot_gpio_isr_task_queue_handler(void *params);
+static void iot_gpio_isr_intr_handler(void* arg);
 
 
-static void iot_gpio_isr_handler(void* arg)
+
+static void  iot_gpio_isr_intr_handler(void* arg) // gpio_isr_handler_add
 {
-    //ESP_LOGI(TAG, "GPIO ISR triggered");
-    uint32_t gpio_num = (uint32_t) arg;
-    xQueueSendFromISR(interruptQueue, &gpio_num, NULL);
-}
-
-static void iot_gpio_control_task(void *params)
-{
-    iot_isr_params_t* intrParams = (iot_isr_params_t*) params;
-    while (true)
-    {
-        ESP_LOGI(TAG, "Control Task' -- \tParam: %i", (int)params);
-        // Call the intr task handler function, passing all params
-        intrParams->intrFunc(params);
-    }    
+  	gpio_num_t* gpio = (gpio_num_t*) arg;
+	//gpio = GPIO_NUM_22;
+	xQueueSendToBackFromISR(interruptQueue, gpio, NULL);
 }
 
 
 
-static void iot_gpio_intr_task_handler(void *params)
+static void iot_gpio_isr_task_queue_handler(void *params) // xTaskCreate
 {
-    iot_isr_params_t* intrParams = (iot_isr_params_t*) params;
-    if (xQueueReceive(interruptQueue, &intrParams->intrPin, portMAX_DELAY)) {
-        ESP_LOGI(TAG, "Params passed from 'iot_gpio_intr_pin' -- intrPin: %i\toutPin: %i\tParam: %i", intrParams->intrPin, intrParams->outPin, (int)intrParams);
-        uint32_t level = intrParams->outInvert ? !gpio_get_level(intrParams->intrPin) : gpio_get_level(intrParams->intrPin);
-        
-        gpio_set_level(intrParams->outPin, gpio_get_level(intrParams->intrPin));
+    
+    while(true) {
+        gpio_num_t gpio;
+        ESP_LOGI(TAG, "Waiting on interrupt queue");
+		BaseType_t rc = xQueueReceive(interruptQueue, &gpio, portMAX_DELAY);
+		ESP_LOGI(TAG, "Woke from interrupt queue wait: %d on GPIO: %i", rc, gpio);
     }
 }
 
@@ -102,7 +89,7 @@ esp_err_t iot_intr_gpio_setup(iot_intr_config_t intrConfig)
     // Configure the interrupt
 
     iot_isr_params_t* intrParams = malloc(sizeof(iot_isr_params_t));
-    intrParams->intrFunc = &iot_gpio_intr_task_handler;
+    intrParams->intrFunc = NULL;
     intrParams->intrPin = intrConfig.intrPin;
     intrParams->outPin = intrConfig.outPin;
     intrParams->outInvert = intrConfig.intrISR.outInvert;
@@ -110,19 +97,15 @@ esp_err_t iot_intr_gpio_setup(iot_intr_config_t intrConfig)
     intrParams->mqttDataHigh = intrConfig.intrISR.mqttDataHigh;
     intrParams->mqttDataLow = intrConfig.intrISR.mqttDataLow;
 
-    ESP_LOGE(TAG, "Params passed from 'iot_gpio_control_task' -- Pin: %i\tFunc: %i\t%i", intrParams->intrPin, (int)intrParams->intrFunc, (int)intrParams);
-
-    BaseType_t xReturned = xTaskCreate(iot_gpio_control_task, intrConfig.intrTaskName, 2048, (void*)intrParams, 1, NULL);
-    if(xReturned == pdPASS) {
-        ESP_LOGI(TAG, "Interrupt Task in FreeRTOS created.");
-    } else {
-        ESP_LOGE(TAG, "Interrupt Task in FreeRTOS creation FAILED.");
-    }
     
-    ESP_ERROR_CHECK(gpio_isr_handler_add(intrConfig.intrPin, iot_gpio_isr_handler, (void *)intrParams->intrPin));
-
+    gpio_isr_handler_add((uint32_t)intrParams->intrPin, iot_gpio_isr_intr_handler, &intrParams->intrPin);
+    
+    
+    xTaskCreate(iot_gpio_isr_task_queue_handler, intrConfig.intrTaskName, 2048, &intrParams->intrPin, 1, NULL);
+    
+    
+    
     return ESP_OK;
 
 
 }
-
