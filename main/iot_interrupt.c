@@ -1,5 +1,7 @@
 #include "iot_globals.h"
 #include "iot_value_defines.h"
+#include "iot_mqtt.h"
+#include "iot_utils.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -19,6 +21,7 @@
 
 static void iot_gpio_isr_task_queue_handler(void *params);
 static void iot_gpio_isr_intr_handler(void* arg);
+static void iot_intr_switch_toggle(iot_isr_params_t *intrParams);
 
 
 
@@ -29,16 +32,78 @@ static void  iot_gpio_isr_intr_handler(void* arg) // gpio_isr_handler_add
 	xQueueSendToBackFromISR(interruptQueue, intrParams, NULL);
 }
 
+static void iot_intr_switch_toggle(iot_isr_params_t *intrParams)
+{
+    // The toggle switch type is used for On/Off type switches.
+    // This type of switch will trigger on 'GPIO_INTR_ANYEDGE'.
+    // Typical uses are door and window open/close switches.
+    
+    // Check to see if there is an outpit GPIO (state
+    // indicator) assigned in the interrupt config.
+    bool indicator = intrParams->outPin != GPIO_NUM_NC ? true : false;
+
+    // Check to see if the input in inverted. Inverted input are
+    // used when the sensor uses an "Acrive Low" output.
+    bool intrPin = gpio_normailized_state(intrParams->outInvert, intrParams->intrPin);
+
+    if(intrPin) {
+        iot_send_mqtt(intrParams->mqttSubTopic, intrParams->mqttDataOn);
+    } else {
+        iot_send_mqtt(intrParams->mqttSubTopic, intrParams->mqttDataOff);
+    }
+
+    if(indicator) { gpio_set_level(intrParams->outPin, intrPin); }
+
+}
+
+
+static void iot_intr_switch_one_shot(iot_isr_params_t *intrParams)
+{
+    // The toggle switch type is used for On/Off type switches.
+    // This type of switch will trigger on 'GPIO_INTR_ANYEDGE'.
+    // Typical uses are door and window open/close switches.
+    
+    // Check to see if there is an outpit GPIO (state
+    // indicator) assigned in the interrupt config.
+    bool indicator = intrParams->outPin != GPIO_NUM_NC ? true : false;
+
+    // Check to see if the input in inverted. Inverted input are
+    // used when the sensor uses an "Acrive Low" output.
+    bool intrPin = gpio_normailized_state(intrParams->outInvert, intrParams->intrPin);
+
+    if(intrPin) {
+        iot_send_mqtt(intrParams->mqttSubTopic, intrParams->mqttDataOn);
+    } else {
+        iot_send_mqtt(intrParams->mqttSubTopic, intrParams->mqttDataOff);
+    }
+
+    if(indicator) { gpio_set_level(intrParams->outPin, intrPin); }
+
+}
 
 
 static void iot_gpio_isr_task_queue_handler(void *params) // xTaskCreate
 {
-    
     while(true) {
         iot_isr_params_t* intrParams = malloc(sizeof(iot_isr_params_t));
         ESP_LOGI(TAG, "Waiting on interrupt queue");
 		BaseType_t rc = xQueueReceive(interruptQueue, intrParams, portMAX_DELAY);
-        
+
+        switch(intrParams->intrSwitchType) {
+            case IOT_ISR_SWITCH_ONE_SHOT :
+                if (intrParams->outPin != GPIO_NUM_NC) {
+                    
+                    gpio_set_level(intrParams->outPin, GPIO_OUT_LEVEL_LOW);
+                }
+                break;
+            
+            case IOT_ISR_SWITCH_TOGGLE :
+                iot_intr_switch_toggle(intrParams);
+                break;
+
+            case IOT_ISR_SWITCH_TIMER :
+                break;
+        }
 		ESP_LOGI(TAG, "Woke from interrupt queue wait: %d on GPIO: %i", rc, intrParams->intrPin);
     }
 }
@@ -66,7 +131,7 @@ esp_err_t iot_intr_gpio_setup(iot_intr_config_t intrConfig)
     };
     ESP_ERROR_CHECK(gpio_config(&intrPinConfig));
 
-    if (1) {
+    if (intrConfig.outPin != GPIO_NUM_NC) {
         gpio_config_t outPinConfig = {
             .pin_bit_mask = BIT64(intrConfig.outPin),
             .mode = GPIO_MODE_OUTPUT,
@@ -94,10 +159,10 @@ esp_err_t iot_intr_gpio_setup(iot_intr_config_t intrConfig)
     intrParams->intrPin = intrConfig.intrPin;
     intrParams->outPin = intrConfig.outPin;
     intrParams->outInvert = intrConfig.intrISR.outInvert;
-    intrParams->intrSwitchType = intrConfig.intrType == GPIO_INTR_ANYEDGE ? IOT_IOT_SWITCH_TOGGLE : IOT_IOT_SWITCH_MOMENTARY;
+    intrParams->intrSwitchType = intrConfig.intrType == GPIO_INTR_ANYEDGE ? IOT_ISR_SWITCH_TOGGLE : IOT_ISR_SWITCH_ONE_SHOT;
     intrParams->mqttSubTopic = intrConfig.intrISR.mqttSubTopic;
-    intrParams->mqttDataHigh = intrConfig.intrISR.mqttDataHigh;
-    intrParams->mqttDataLow = intrConfig.intrISR.mqttDataLow;
+    intrParams->mqttDataOn = intrConfig.intrISR.mqttDataOn;
+    intrParams->mqttDataOff = intrConfig.intrISR.mqttDataOff;
 
     
     gpio_isr_handler_add((uint32_t)intrParams->intrPin, iot_gpio_isr_intr_handler, intrParams);
