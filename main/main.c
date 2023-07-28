@@ -23,9 +23,9 @@ void old_app_main(void *ignore);
 
 void app_main(void)
 {
-    //globals_init();
-    interruptQueue = xQueueCreate(10, sizeof(uint32_t));
-    ESP_ERROR_CHECK(gpio_install_isr_service(ESP_INTR_FLAG_LEVEL3));
+    globals_init();
+    
+    //ESP_ERROR_CHECK(gpio_install_isr_service(ESP_INTR_FLAG_LEVEL3));
     
 
     //init_wifi();

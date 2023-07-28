@@ -13,10 +13,17 @@ typedef void (*iotVoidFuncPtr)(void*);
 
 typedef enum
 {
-    IOT_GPIO_PULL_UP =      0,
-    IOT_GPIO_PULL_DOWN =    1,
-    IOT_GPIO_PULL_BOTH =    2,
+    IOT_GPIO_PULL_UP =          0,
+    IOT_GPIO_PULL_DOWN =        1,
+    IOT_GPIO_PULL_BOTH =        2,
 } iot_gpio_pull_t;
+
+typedef enum
+{
+    IOT_IOT_SWITCH_TOGGLE =     0,
+    IOT_IOT_SWITCH_MOMENTARY =  1,
+} iot_switch_type_t;
+
 
 typedef struct wifi_connection_s
 {  
@@ -50,11 +57,12 @@ typedef struct {
 typedef struct {
     gpio_num_t intrPin;
     gpio_num_t outPin;
+    iot_switch_type_t intrSwitchType;
     bool outInvert;
     char* mqttSubTopic;
     char* mqttDataHigh;
     char* mqttDataLow;
-    iotVoidFuncPtr intrFunc;  // iot_gpio_intr_pin
+    //iotVoidFuncPtr intrFunc;  // iot_gpio_intr_pin
 } iot_isr_params_t;
 
 extern QueueHandle_t interruptQueue;

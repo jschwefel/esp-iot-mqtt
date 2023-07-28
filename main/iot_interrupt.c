@@ -24,9 +24,9 @@ static void iot_gpio_isr_intr_handler(void* arg);
 
 static void  iot_gpio_isr_intr_handler(void* arg) // gpio_isr_handler_add
 {
-  	gpio_num_t* gpio = (gpio_num_t*) arg;
+  	iot_isr_params_t* intrParams = (iot_isr_params_t*) arg;
 	//gpio = GPIO_NUM_22;
-	xQueueSendToBackFromISR(interruptQueue, gpio, NULL);
+	xQueueSendToBackFromISR(interruptQueue, intrParams, NULL);
 }
 
 
@@ -35,10 +35,11 @@ static void iot_gpio_isr_task_queue_handler(void *params) // xTaskCreate
 {
     
     while(true) {
-        gpio_num_t gpio;
+        iot_isr_params_t* intrParams = malloc(sizeof(iot_isr_params_t));
         ESP_LOGI(TAG, "Waiting on interrupt queue");
-		BaseType_t rc = xQueueReceive(interruptQueue, &gpio, portMAX_DELAY);
-		ESP_LOGI(TAG, "Woke from interrupt queue wait: %d on GPIO: %i", rc, gpio);
+		BaseType_t rc = xQueueReceive(interruptQueue, intrParams, portMAX_DELAY);
+        
+		ESP_LOGI(TAG, "Woke from interrupt queue wait: %d on GPIO: %i", rc, intrParams->intrPin);
     }
 }
 
@@ -89,19 +90,20 @@ esp_err_t iot_intr_gpio_setup(iot_intr_config_t intrConfig)
     // Configure the interrupt
 
     iot_isr_params_t* intrParams = malloc(sizeof(iot_isr_params_t));
-    intrParams->intrFunc = NULL;
+    //intrParams->intrFunc = NULL;
     intrParams->intrPin = intrConfig.intrPin;
     intrParams->outPin = intrConfig.outPin;
     intrParams->outInvert = intrConfig.intrISR.outInvert;
+    intrParams->intrSwitchType = intrConfig.intrType == GPIO_INTR_ANYEDGE ? IOT_IOT_SWITCH_TOGGLE : IOT_IOT_SWITCH_MOMENTARY;
     intrParams->mqttSubTopic = intrConfig.intrISR.mqttSubTopic;
     intrParams->mqttDataHigh = intrConfig.intrISR.mqttDataHigh;
     intrParams->mqttDataLow = intrConfig.intrISR.mqttDataLow;
 
     
-    gpio_isr_handler_add((uint32_t)intrParams->intrPin, iot_gpio_isr_intr_handler, &intrParams->intrPin);
+    gpio_isr_handler_add((uint32_t)intrParams->intrPin, iot_gpio_isr_intr_handler, intrParams);
     
     
-    xTaskCreate(iot_gpio_isr_task_queue_handler, intrConfig.intrTaskName, 2048, &intrParams->intrPin, 1, NULL);
+    xTaskCreate(iot_gpio_isr_task_queue_handler, intrConfig.intrTaskName, 2048, intrParams, 1, NULL);
     
     
     
