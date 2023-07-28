@@ -4,6 +4,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
 //#include "freertos/task.h"
+#include "mqtt_client.h"
 
 
 
@@ -14,6 +15,7 @@ iot_configuration_s iot_configuration;
 nvs_handle_t iot_nvs_user_handle;
 QueueHandle_t interruptQueue;
 QueueHandle_t interruptQueue2;
+esp_mqtt_client_handle_t mqtt_client;
 
 
 

@@ -68,7 +68,7 @@ static void wifi_event_handler_sta(void* arg, esp_event_base_t event_base,
 bool init_wifi()
 {
     // Testing wifi-mode is easier this way than nvs uploads.
-    iot_nvs_set_int_value_if_exist("wifi-mode", 1);
+    iot_nvs_set_int_value_if_exist("wifi-mode", 2);
     // End testing code
     iot_configuration.wifi_settings = get_wifi_settings_from_nvs();
     switch (iot_configuration.wifi_settings.mode) 
