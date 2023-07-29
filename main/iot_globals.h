@@ -32,7 +32,6 @@ typedef enum
     IOT_ISR_SWITCH_TIMER =      2,
 } iot_switch_type_t;
 
-
 typedef struct wifi_connection_s
 {  
     int32_t mode;
@@ -57,8 +56,10 @@ typedef struct {
     gpio_num_t intrPin;
     iot_gpio_pull_t intrPull;
     gpio_int_type_t intrType; 
+    iot_switch_type_t intrSwitchType;
     gpio_num_t outPin;
     iot_gpio_pull_t outPull;
+    uint32_t timerDelay;
     iot_isr_config_t intrISR;
 } iot_intr_config_t;
 
@@ -74,12 +75,14 @@ typedef struct {
     //iotVoidFuncPtr intrFunc;  // iot_gpio_intr_pin
 } iot_isr_params_t;
 
-extern QueueHandle_t interruptQueue;
-extern QueueHandle_t interruptQueue2;
+extern QueueHandle_t gpioInterruptQueue;
+extern QueueHandle_t gpioTimerInterruptQueue;
+
 extern nvs_handle_t iot_nvs_user_handle;
 extern iot_configuration_s iot_configuration;
 extern const char *TAG;
 extern esp_mqtt_client_handle_t mqtt_client;
+extern char* baseTopic;
 
 
 void globals_init(void);

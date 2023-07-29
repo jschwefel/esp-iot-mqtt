@@ -22,3 +22,12 @@ bool gpio_normailized_state(bool inverted, uint32_t gpioPin)
         return pinBool;
     }
 }
+
+char* concat(const char *s1, const char *s2)
+{
+    char *result = malloc(strlen(s1) + strlen(s2) + 1); // +1 for the null-terminator
+    // in real code you would check for errors in malloc here
+    strcpy(result, s1);
+    strcat(result, s2);
+    return result;
+}

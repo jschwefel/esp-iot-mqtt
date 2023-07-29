@@ -3,6 +3,7 @@
 #include "esp_event.h"
 #include "esp_log.h"
 #include "iot_globals.h"
+#include "iot_utils.h"
 
 static void log_error_if_nonzero(const char *message, int error_code);
 static void mqtt_app_start(void);
@@ -90,6 +91,5 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
 
 void iot_send_mqtt(char* service, char* payload)
 {
-    
-    esp_mqtt_client_publish(mqtt_client, "/iot-40b190/pantryLight", payload, 0, 0, 0);
+    esp_mqtt_client_publish(mqtt_client, concat(baseTopic, service), payload, 0, 0, 0);
 }
