@@ -31,10 +31,10 @@ static void mqtt_app_start(void)
         .credentials.authentication.password = "mqtt_pass",
     };
 
-    mqtt_client = esp_mqtt_client_init(&mqtt_cfg);
+    iotMqttClient = esp_mqtt_client_init(&mqtt_cfg);
     /* The last argument may be used to pass data to the event handler, in this example mqtt_event_handler */
-    esp_mqtt_client_register_event(mqtt_client, ESP_EVENT_ANY_ID, mqtt_event_handler, NULL);
-    esp_mqtt_client_start(mqtt_client);
+    esp_mqtt_client_register_event(iotMqttClient, ESP_EVENT_ANY_ID, mqtt_event_handler, NULL);
+    esp_mqtt_client_start(iotMqttClient);
 }
 
 
@@ -42,8 +42,8 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
 {
     ESP_LOGD(TAG, "Event dispatched from event loop base=%s, event_id=%" PRIi32 "", base, event_id);
     esp_mqtt_event_handle_t event = event_data;
-    esp_mqtt_client_handle_t client = event->client;
-    int msg_id;
+    //esp_mqtt_client_handle_t client = event->client;
+    //int msg_id;
     switch ((esp_mqtt_event_id_t)event_id) {
     case MQTT_EVENT_CONNECTED:
         ESP_LOGI(TAG, "MQTT_EVENT_CONNECTED");
@@ -89,7 +89,10 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
 
 }
 
-void iot_send_mqtt(char* service, char* payload)
+void iot_send_mqtt(iot_mqtt_message_t* mqttMessage)
 {
-    esp_mqtt_client_publish(mqtt_client, concat(baseTopic, service), payload, 0, 0, 0);
+    // Will eventually queue the the mqtt publish events. 
+    // esp_mqtt_client_enqueue(iotMqttClient, concat(baseTopic, mqttMessage->topic), mqttMessage->data, 0, mqttMessage->qos, mqttMessage->retain, true);
+    
+    esp_mqtt_client_publish(iotMqttClient, concat(baseTopic, mqttMessage->topic), mqttMessage->data, 0, mqttMessage->qos, mqttMessage->retain);
 }

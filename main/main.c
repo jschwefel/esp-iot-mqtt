@@ -35,12 +35,10 @@ void app_main(void)
         .intrPull = IOT_GPIO_PULL_UP,
         .intrType = GPIO_INTR_ANYEDGE,
         .outPin = GPIO_NUM_1,
-        .intrISR = {
-            .outInvert = true,
-            .mqttSubTopic = "/PantrySwitch0",
-            .mqttDataOn = "On",
-            .mqttDataOff = "Off",
-        }
+        .outInvert = true,
+        .mqttSubTopic = "/PantrySwitch0",
+        .mqttDataOn = "On",
+        .mqttDataOff = "Off",
     };
     
     iot_intr_config_t intr_gpio_2 = {
@@ -50,12 +48,10 @@ void app_main(void)
         .intrType = GPIO_INTR_POSEDGE,
         .intrSwitchType = IOT_ISR_SWITCH_ONE_SHOT,
         .outPin = GPIO_NUM_3,
-        .intrISR = {
-            .outInvert = true,
-            .mqttSubTopic = "/PantrySwitch1",
-            .mqttDataOn = "ButtonPushed",
+        .outInvert = true,
+        .mqttSubTopic = "/PantrySwitch1",
+        .mqttDataOn = "ButtonPushed",
 //            .mqttDataOff = "On",
-        }
     };
 
     iot_intr_config_t intr_gpio_4 = {
@@ -66,12 +62,10 @@ void app_main(void)
         .intrSwitchType = IOT_ISR_SWITCH_TIMER,
         .timerDelay = 5000,
         .outPin = GPIO_NUM_5,
-        .intrISR = {
-            .outInvert = true,
-            .mqttSubTopic = "/PantrySwitch2",
-            .mqttDataOn = "On",
-            .mqttDataOff = "Off",
-        }
+        .outInvert = true,
+        .mqttSubTopic = "/PantrySwitch2",
+        .mqttDataOn = "On",
+        .mqttDataOff = "Off",
     };
 
     

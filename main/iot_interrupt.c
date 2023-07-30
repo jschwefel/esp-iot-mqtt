@@ -15,6 +15,8 @@
 #include "freertos/portmacro.h"
 #include "esp_log.h"
 
+
+
 TimerHandle_t timerHandle;
 
 static void iot_gpio_isr_task_queue_handler(void *params);
@@ -99,12 +101,12 @@ esp_err_t iot_intr_gpio_setup(iot_intr_config_t intrConfig)
     iot_isr_params_t* intrParams = malloc(sizeof(iot_isr_params_t));
     intrParams->intrPin = intrConfig.intrPin;
     intrParams->outPin = intrConfig.outPin;
-    intrParams->outInvert = intrConfig.intrISR.outInvert;
+    intrParams->outInvert = intrConfig.outInvert;
     intrParams->intrSwitchType = intrConfig.intrSwitchType;
     intrParams->timerDelay = intrConfig.intrSwitchType == IOT_ISR_SWITCH_ONE_SHOT ? IOT_ISR_ONE_SHOT_OUT_DELAY : intrConfig.timerDelay;
-    intrParams->mqttSubTopic = intrConfig.intrISR.mqttSubTopic;
-    intrParams->mqttDataOn = intrConfig.intrISR.mqttDataOn;
-    intrParams->mqttDataOff = intrConfig.intrISR.mqttDataOff;
+    intrParams->mqttSubTopic = intrConfig.mqttSubTopic;
+    intrParams->mqttDataOn = intrConfig.mqttDataOn;
+    intrParams->mqttDataOff = intrConfig.mqttDataOff;
     
     gpio_isr_handler_add((uint32_t)intrParams->intrPin, iot_gpio_isr_intr_handler, intrParams);
     xTaskCreate(iot_gpio_isr_task_queue_handler, intrConfig.intrTaskName, 2048, intrParams, 1, NULL);
@@ -127,10 +129,22 @@ static void iot_intr_switch_toggle(iot_isr_params_t *intrParams)
     // used when the sensor uses an "Acrive Low" output.
     bool intrPin = gpio_normailized_state(intrParams->outInvert, intrParams->intrPin);
 
+    iot_mqtt_message_t mqttMessage = {
+        .topic = intrParams->mqttSubTopic,
+        .qos = 0,
+        .retain = true,
+
+    };
+
+
     if(intrPin) {
-        iot_send_mqtt(intrParams->mqttSubTopic, intrParams->mqttDataOn);
+        mqttMessage.data = intrParams->mqttDataOn;
+//        iot_send_mqtt(intrParams->mqttSubTopic, intrParams->mqttDataOn);
+        iot_send_mqtt(&mqttMessage);
     } else {
-        iot_send_mqtt(intrParams->mqttSubTopic, intrParams->mqttDataOff);
+        mqttMessage.data = intrParams->mqttDataOff;
+//        iot_send_mqtt(intrParams->mqttSubTopic, intrParams->mqttDataOff);
+        iot_send_mqtt(&mqttMessage);
     }
 
     if(indicator) { gpio_set_level(intrParams->outPin, intrPin); }
@@ -147,7 +161,14 @@ static void iot_intr_switch_one_shot_and_timer(iot_isr_params_t *intrParams)
 
     // Check to see if the input in inverted. Inverted input are
     // used when the sensor uses an "Acrive Low" output.
-    iot_send_mqtt(intrParams->mqttSubTopic, intrParams->mqttDataOn);
+    iot_mqtt_message_t mqttMessage = {
+        .topic = intrParams->mqttSubTopic,
+        .qos = 0,
+        .retain = true,
+        .data = intrParams->mqttDataOn,
+    };
+
+    iot_send_mqtt(&mqttMessage);
 
     if(indicator) { 
         gpio_set_level(intrParams->outPin, true);
@@ -166,6 +187,12 @@ static void gpio_timer_intr_callback(TimerHandle_t timer)
     }
     
     if(intrParams->intrSwitchType == IOT_ISR_SWITCH_TIMER) {
-        iot_send_mqtt(intrParams->mqttSubTopic, intrParams->mqttDataOff);
+        iot_mqtt_message_t mqttMessage = {
+            .topic = intrParams->mqttSubTopic,
+            .qos = 0,
+            .retain = true,
+            .data = intrParams->mqttDataOff,
+        };  
+        iot_send_mqtt(&mqttMessage);
     }
 }

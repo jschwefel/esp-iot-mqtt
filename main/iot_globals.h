@@ -45,11 +45,11 @@ typedef struct iot_configuration_s
 } iot_configuration_s;
 
 typedef struct {
-    bool outInvert;
-    char* mqttSubTopic;
-    char* mqttDataOn;
-    char* mqttDataOff;
-} iot_isr_config_t;
+    char* topic;
+    char* data;
+    int qos;
+    int retain;
+} iot_mqtt_message_t;
 
 typedef struct {
     char* intrTaskName;
@@ -60,7 +60,10 @@ typedef struct {
     gpio_num_t outPin;
     iot_gpio_pull_t outPull;
     uint32_t timerDelay;
-    iot_isr_config_t intrISR;
+    bool outInvert;
+    char* mqttSubTopic;
+    char* mqttDataOn;
+    char* mqttDataOff;
 } iot_intr_config_t;
 
 typedef struct {
@@ -77,11 +80,12 @@ typedef struct {
 
 extern QueueHandle_t gpioInterruptQueue;
 extern QueueHandle_t gpioTimerInterruptQueue;
+extern QueueHandle_t mqttQueue;
 
 extern nvs_handle_t iot_nvs_user_handle;
 extern iot_configuration_s iot_configuration;
 extern const char *TAG;
-extern esp_mqtt_client_handle_t mqtt_client;
+extern esp_mqtt_client_handle_t iotMqttClient;
 extern char* baseTopic;
 
 
