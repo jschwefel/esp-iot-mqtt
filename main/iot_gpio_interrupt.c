@@ -9,11 +9,14 @@
 #include "freertos/queue.h"
 #include "freertos/task.h"
 #include "freertos/timers.h"
-#include "driver/gpio.h"
-#include "driver/gpio_filter.h"
-#include "iot_interrupt.h"
+#include "iot_gpio_interrupt.h"
 #include "freertos/portmacro.h"
 #include "esp_log.h"
+#include "driver/gpio.h"
+#include "driver/gpio_filter.h"
+#include "iot_config.h"
+
+
 
 TimerHandle_t timerHandle;
 
@@ -55,6 +58,20 @@ static void iot_gpio_isr_task_queue_handler(void *params) // xTaskCreate
     }
 }
 
+void iot_intr_gpio_setup_config()
+{
+    iot_config_linked_list_t* head = iot_list_simple_switch_intr_config_entries();
+    iot_config_linked_list_t* item = head; 
+
+    if(head->configEntry != NULL) {
+        while(item != NULL) {
+            iot_config_item_t* configItem = item->configEntry;
+            iot_intr_config_t* intrConfigItem = (iot_intr_config_t*)configItem->configItem;
+            iot_intr_gpio_setup(*intrConfigItem);
+            item = item->next;
+        }
+    }
+}
 
 esp_err_t iot_intr_gpio_setup(iot_intr_config_t intrConfig)
 
@@ -99,12 +116,12 @@ esp_err_t iot_intr_gpio_setup(iot_intr_config_t intrConfig)
     iot_isr_params_t* intrParams = malloc(sizeof(iot_isr_params_t));
     intrParams->intrPin = intrConfig.intrPin;
     intrParams->outPin = intrConfig.outPin;
-    intrParams->outInvert = intrConfig.intrISR.outInvert;
+    intrParams->outInvert = intrConfig.outInvert;
     intrParams->intrSwitchType = intrConfig.intrSwitchType;
     intrParams->timerDelay = intrConfig.intrSwitchType == IOT_ISR_SWITCH_ONE_SHOT ? IOT_ISR_ONE_SHOT_OUT_DELAY : intrConfig.timerDelay;
-    intrParams->mqttSubTopic = intrConfig.intrISR.mqttSubTopic;
-    intrParams->mqttDataOn = intrConfig.intrISR.mqttDataOn;
-    intrParams->mqttDataOff = intrConfig.intrISR.mqttDataOff;
+    intrParams->mqttSubTopic = intrConfig.mqttSubTopic;
+    intrParams->mqttDataOn = intrConfig.mqttDataOn;
+    intrParams->mqttDataOff = intrConfig.mqttDataOff;
     
     gpio_isr_handler_add((uint32_t)intrParams->intrPin, iot_gpio_isr_intr_handler, intrParams);
     xTaskCreate(iot_gpio_isr_task_queue_handler, intrConfig.intrTaskName, 2048, intrParams, 1, NULL);
@@ -127,10 +144,22 @@ static void iot_intr_switch_toggle(iot_isr_params_t *intrParams)
     // used when the sensor uses an "Acrive Low" output.
     bool intrPin = gpio_normailized_state(intrParams->outInvert, intrParams->intrPin);
 
+    iot_mqtt_message_t mqttMessage = {
+        .topic = intrParams->mqttSubTopic,
+        .qos = 0,
+        .retain = true,
+
+    };
+
+
     if(intrPin) {
-        iot_send_mqtt(intrParams->mqttSubTopic, intrParams->mqttDataOn);
+        mqttMessage.data = intrParams->mqttDataOn;
+//        iot_send_mqtt(intrParams->mqttSubTopic, intrParams->mqttDataOn);
+        iot_send_mqtt(&mqttMessage);
     } else {
-        iot_send_mqtt(intrParams->mqttSubTopic, intrParams->mqttDataOff);
+        mqttMessage.data = intrParams->mqttDataOff;
+//        iot_send_mqtt(intrParams->mqttSubTopic, intrParams->mqttDataOff);
+        iot_send_mqtt(&mqttMessage);
     }
 
     if(indicator) { gpio_set_level(intrParams->outPin, intrPin); }
@@ -147,7 +176,14 @@ static void iot_intr_switch_one_shot_and_timer(iot_isr_params_t *intrParams)
 
     // Check to see if the input in inverted. Inverted input are
     // used when the sensor uses an "Acrive Low" output.
-    iot_send_mqtt(intrParams->mqttSubTopic, intrParams->mqttDataOn);
+    iot_mqtt_message_t mqttMessage = {
+        .topic = intrParams->mqttSubTopic,
+        .qos = 0,
+        .retain = true,
+        .data = intrParams->mqttDataOn,
+    };
+
+    iot_send_mqtt(&mqttMessage);
 
     if(indicator) { 
         gpio_set_level(intrParams->outPin, true);
@@ -166,6 +202,35 @@ static void gpio_timer_intr_callback(TimerHandle_t timer)
     }
     
     if(intrParams->intrSwitchType == IOT_ISR_SWITCH_TIMER) {
-        iot_send_mqtt(intrParams->mqttSubTopic, intrParams->mqttDataOff);
+        iot_mqtt_message_t mqttMessage = {
+            .topic = intrParams->mqttSubTopic,
+            .qos = 0,
+            .retain = true,
+            .data = intrParams->mqttDataOff,
+        };  
+        iot_send_mqtt(&mqttMessage);
     }
+}
+
+
+void iot_intr_gpio_set_config(char* intrName, gpio_num_t intrPin, iot_gpio_pull_t intrPull,
+    gpio_int_type_t intrType, iot_switch_type_t intrSwitchType, int timeDelay,
+    gpio_num_t outPin, iot_gpio_pull_t outPull, bool outInvert, char* mqttSubTopic,
+    char* mqttOn, char* mqttOff)
+{
+    iot_intr_config_t* intrGpioConfig = malloc(sizeof(iot_intr_config_t));
+        intrGpioConfig->intrTaskName = intrName;
+        intrGpioConfig->intrPin = intrPin;
+        intrGpioConfig->intrPull = intrPull;
+        intrGpioConfig->intrType = intrType;
+        intrGpioConfig->intrSwitchType = intrSwitchType;
+        intrGpioConfig->timerDelay = timeDelay;
+        intrGpioConfig->outPin = outPin;
+        intrGpioConfig->outPull = outPull;
+        intrGpioConfig->outInvert = outInvert;
+        intrGpioConfig->mqttSubTopic = mqttSubTopic;
+        intrGpioConfig->mqttDataOn = mqttOn;
+        intrGpioConfig->mqttDataOff = mqttOff;
+    
+    iot_insert_simple_switch_intr_config_entry(intrGpioConfig);
 }

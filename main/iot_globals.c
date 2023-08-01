@@ -7,8 +7,7 @@
 //#include "freertos/task.h"
 #include "mqtt_client.h"
 //#include "driver/timer.h"
-
-
+#include "iot_config.h"
 
 
 const char *TAG = "ESP-IOT-MQTT";
@@ -17,8 +16,10 @@ iot_configuration_s iot_configuration;
 nvs_handle_t iot_nvs_user_handle;
 QueueHandle_t gpioInterruptQueue;
 QueueHandle_t gpioTimerInterruptQueue;
-esp_mqtt_client_handle_t mqtt_client;
+QueueHandle_t mqttQueue;
+esp_mqtt_client_handle_t iotMqttClient;
 char* baseTopic;
+ht* iotConfigHashTable;
 
 
 void globals_init(void)
@@ -28,12 +29,13 @@ void globals_init(void)
     iot_nvs_user_handle = iot_init_flash(iot_nvs_user_handle, "configuration");
     gpioInterruptQueue = xQueueCreate(10, sizeof(iot_isr_params_t));
     gpioTimerInterruptQueue = xQueueCreate(10, sizeof(iot_isr_params_t));
+    mqttQueue = xQueueCreate(50, sizeof(int));
 
     // Need to make configurable
     char* base = "iot-";
     char* lastMac = get_mac_address_half_low();
     baseTopic = concat(base, lastMac);
-
+    iot_create_config_hashtable();
 
     //handle = iot_nvs_user_handle;
 

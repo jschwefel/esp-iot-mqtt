@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
+#include "iot_globals.h"
 #include "esp_mac.h"
 #include "driver/gpio.h"
 
@@ -30,4 +31,17 @@ char* concat(const char *s1, const char *s2)
     strcpy(result, s1);
     strcat(result, s2);
     return result;
+}
+
+void freeConfigList(iot_config_linked_list_t* head)
+{
+   iot_config_linked_list_t* tmp;
+
+   while (head != NULL)
+    {
+       tmp = head;
+       head = head->next;
+       free(tmp);
+    }
+
 }

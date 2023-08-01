@@ -1,5 +1,5 @@
 #include "iot_globals.h"
-#include "iot_interrupt.h"
+#include "iot_gpio_interrupt.h"
 #include "iot_wifi.h"
 #include "iot_mqtt.h"
 /*
@@ -14,76 +14,93 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/queue.h>
 #include <freertos/task.h>
-
-#include "sdkconfig.h"
-
-void old_app_main(void *ignore);
+#include "iot_config.h"
+//#include "sdkconfig.h"
 
 
-
+#include "benhoyt_hashtable.h"
 
 
 void app_main(void)
 {
     globals_init();
+
+     
     init_wifi();
     iot_start_mqtt();
-    
-    iot_intr_config_t intr_gpio_0 = {
-        .intrTaskName = "Task 0",
-        .intrPin = GPIO_NUM_0,
-        .intrPull = IOT_GPIO_PULL_UP,
-        .intrType = GPIO_INTR_ANYEDGE,
-        .outPin = GPIO_NUM_1,
-        .intrISR = {
-            .outInvert = true,
-            .mqttSubTopic = "/PantrySwitch0",
-            .mqttDataOn = "On",
-            .mqttDataOff = "Off",
-        }
-    };
-    
-    iot_intr_config_t intr_gpio_2 = {
-        .intrTaskName = "Task 2",
-        .intrPin = GPIO_NUM_2,
-        .intrPull = IOT_GPIO_PULL_DOWN,
-        .intrType = GPIO_INTR_POSEDGE,
-        .intrSwitchType = IOT_ISR_SWITCH_ONE_SHOT,
-        .outPin = GPIO_NUM_3,
-        .intrISR = {
-            .outInvert = true,
-            .mqttSubTopic = "/PantrySwitch1",
-            .mqttDataOn = "ButtonPushed",
-//            .mqttDataOff = "On",
-        }
-    };
 
-    iot_intr_config_t intr_gpio_4 = {
-        .intrTaskName = "Task 4",
-        .intrPin = GPIO_NUM_4,
-        .intrPull = IOT_GPIO_PULL_DOWN,
-        .intrType = GPIO_INTR_POSEDGE,
-        .intrSwitchType = IOT_ISR_SWITCH_TIMER,
-        .timerDelay = 5000,
-        .outPin = GPIO_NUM_5,
-        .intrISR = {
-            .outInvert = true,
-            .mqttSubTopic = "/PantrySwitch2",
-            .mqttDataOn = "On",
-            .mqttDataOff = "Off",
-        }
-    };
 
-    
-    
-    iot_intr_gpio_setup(intr_gpio_0);
-    iot_intr_gpio_setup(intr_gpio_2);
-    iot_intr_gpio_setup(intr_gpio_4);
-    
-    
-    
-    
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    iot_intr_gpio_set_config("Task 0", GPIO_NUM_0, IOT_GPIO_PULL_UP,
+                            GPIO_INTR_ANYEDGE, IOT_ISR_SWITCH_TOGGLE, 0,
+                            GPIO_NUM_1, IOT_GPIO_PULL_DOWN, 
+                            true, "/PantrySwitc0", "On", "Off");
+
+    iot_intr_gpio_set_config("Task 2", GPIO_NUM_2, IOT_GPIO_PULL_DOWN,
+                            GPIO_INTR_POSEDGE, IOT_ISR_SWITCH_ONE_SHOT, 5000,
+                            GPIO_NUM_3, IOT_GPIO_PULL_DOWN, 
+                            true, "/PantrySwitch2", "OneShot", NULL);
+
+    iot_intr_gpio_set_config("Task 4", GPIO_NUM_4, IOT_GPIO_PULL_DOWN,
+                            GPIO_INTR_POSEDGE, IOT_ISR_SWITCH_TIMER, 5000,
+                            GPIO_NUM_5, IOT_GPIO_PULL_DOWN, 
+                            true, "/PantrySwitch4", "On", "Off");
+
+    iot_intr_gpio_set_config("Task 6", GPIO_NUM_6, IOT_GPIO_PULL_DOWN,
+                            GPIO_INTR_POSEDGE, IOT_ISR_SWITCH_TOGGLE, 0,
+                            GPIO_NUM_7, IOT_GPIO_PULL_DOWN, true,
+                            "/PantrySwitch6", "On", "Off");
+    
+    iot_intr_gpio_set_config("Task 8", GPIO_NUM_8, IOT_GPIO_PULL_DOWN,
+                            GPIO_INTR_POSEDGE, IOT_ISR_SWITCH_ONE_SHOT, 0,
+                            GPIO_NUM_9, IOT_GPIO_PULL_DOWN, false,
+                            "/PantrySwitch8","On", NULL);
+
+    iot_intr_gpio_setup_config();
+
+
+
+
+   
 }
 
 
