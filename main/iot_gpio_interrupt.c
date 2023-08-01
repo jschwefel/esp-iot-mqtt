@@ -9,11 +9,12 @@
 #include "freertos/queue.h"
 #include "freertos/task.h"
 #include "freertos/timers.h"
-#include "driver/gpio.h"
-#include "driver/gpio_filter.h"
-#include "iot_interrupt.h"
+#include "iot_gpio_interrupt.h"
 #include "freertos/portmacro.h"
 #include "esp_log.h"
+#include "driver/gpio.h"
+#include "driver/gpio_filter.h"
+#include "iot_config.h"
 
 
 
@@ -57,6 +58,20 @@ static void iot_gpio_isr_task_queue_handler(void *params) // xTaskCreate
     }
 }
 
+void iot_intr_gpio_setup_config()
+{
+    iot_config_linked_list_t* head = iot_list_simple_switch_intr_config_entries();
+    iot_config_linked_list_t* item = head; 
+
+    if(head->configEntry != NULL) {
+        while(item != NULL) {
+            iot_config_item_t* configItem = item->configEntry;
+            iot_intr_config_t* intrConfigItem = (iot_intr_config_t*)configItem->configItem;
+            iot_intr_gpio_setup(*intrConfigItem);
+            item = item->next;
+        }
+    }
+}
 
 esp_err_t iot_intr_gpio_setup(iot_intr_config_t intrConfig)
 
@@ -195,4 +210,27 @@ static void gpio_timer_intr_callback(TimerHandle_t timer)
         };  
         iot_send_mqtt(&mqttMessage);
     }
+}
+
+
+void iot_intr_gpio_set_config(char* intrName, gpio_num_t intrPin, iot_gpio_pull_t intrPull,
+    gpio_int_type_t intrType, iot_switch_type_t intrSwitchType, int timeDelay,
+    gpio_num_t outPin, iot_gpio_pull_t outPull, bool outInvert, char* mqttSubTopic,
+    char* mqttOn, char* mqttOff)
+{
+    iot_intr_config_t* intrGpioConfig = malloc(sizeof(iot_intr_config_t));
+        intrGpioConfig->intrTaskName = intrName;
+        intrGpioConfig->intrPin = intrPin;
+        intrGpioConfig->intrPull = intrPull;
+        intrGpioConfig->intrType = intrType;
+        intrGpioConfig->intrSwitchType = intrSwitchType;
+        intrGpioConfig->timerDelay = timeDelay;
+        intrGpioConfig->outPin = outPin;
+        intrGpioConfig->outPull = outPull;
+        intrGpioConfig->outInvert = outInvert;
+        intrGpioConfig->mqttSubTopic = mqttSubTopic;
+        intrGpioConfig->mqttDataOn = mqttOn;
+        intrGpioConfig->mqttDataOff = mqttOff;
+    
+    iot_insert_simple_switch_intr_config_entry(intrGpioConfig);
 }

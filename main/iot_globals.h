@@ -9,6 +9,8 @@
 #include "freertos/queue.h"
 #include "driver/gpio.h"
 #include "mqtt_client.h"
+#include "benhoyt_hashtable.h"
+
 
 typedef void (*iotVoidFuncPtr)(void*);
 
@@ -32,6 +34,10 @@ typedef enum
     IOT_ISR_SWITCH_TIMER =      2,
 } iot_switch_type_t;
 
+typedef enum {
+    IOT_CONFIG_SIMPLE_SWITCH =  0,
+} iot_config_item_type_t;
+
 typedef struct wifi_connection_s
 {  
     int32_t mode;
@@ -53,6 +59,9 @@ typedef struct {
 
 typedef struct {
     char* intrTaskName;
+    char* mqttSubTopic;
+    char* mqttDataOn;
+    char* mqttDataOff;
     gpio_num_t intrPin;
     iot_gpio_pull_t intrPull;
     gpio_int_type_t intrType; 
@@ -61,9 +70,7 @@ typedef struct {
     iot_gpio_pull_t outPull;
     uint32_t timerDelay;
     bool outInvert;
-    char* mqttSubTopic;
-    char* mqttDataOn;
-    char* mqttDataOff;
+
 } iot_intr_config_t;
 
 typedef struct {
@@ -78,6 +85,18 @@ typedef struct {
     //iotVoidFuncPtr intrFunc;  // iot_gpio_intr_pin
 } iot_isr_params_t;
 
+
+typedef struct {
+    iot_config_item_type_t configItemType;
+    char* configKey;
+    void* configItem;
+} iot_config_item_t;
+
+typedef struct {
+    iot_config_item_t* configEntry;
+    void* next;
+} iot_config_linked_list_t;
+
 extern QueueHandle_t gpioInterruptQueue;
 extern QueueHandle_t gpioTimerInterruptQueue;
 extern QueueHandle_t mqttQueue;
@@ -87,6 +106,7 @@ extern iot_configuration_s iot_configuration;
 extern const char *TAG;
 extern esp_mqtt_client_handle_t iotMqttClient;
 extern char* baseTopic;
+extern ht* iotConfigHashTable;
 
 
 void globals_init(void);
