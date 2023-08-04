@@ -68,7 +68,7 @@ static void wifi_event_handler_sta(void* arg, esp_event_base_t event_base,
 bool init_wifi()
 {
     // Testing wifi-mode is easier this way than nvs uploads.
-    iot_nvs_set_int_value_if_exist("wifi-mode", 2);
+    iot_nvs_set_int_value("wifi-mode", 2);
     // End testing code
     iot_configuration.wifi_settings = get_wifi_settings_from_nvs();
     switch (iot_configuration.wifi_settings.mode) 
@@ -103,8 +103,8 @@ static wifi_connection_s get_wifi_settings_from_nvs()
 {
     struct wifi_connection_s settings;
     settings.mode = iot_nvs_load_int_value_if_exist(IOT_KEY_WIFI_MODE);
-    settings.ssid = iot_nvs_load_str_value_if_exist(IOT_KEY_WIFI_SSID);
-    settings.passwd = iot_nvs_load_str_value_if_exist(IOT_KEY_WIFI_PASS); 
+    settings.ssid = iot_nvs_load_str_value(IOT_KEY_WIFI_SSID);
+    settings.passwd = iot_nvs_load_str_value(IOT_KEY_WIFI_PASS); 
 
     return settings;
 }
@@ -215,7 +215,7 @@ static void wifi_init_sta(wifi_connection_s settings)
     } else if (bits & WIFI_FAIL_BIT) {
         ESP_LOGI(TAG, "Failed to connect to SSID:%s, password:%s",
                 wifi_config.ap.ssid, wifi_config.ap.password);
-                //iot_nvs_set_int_value_if_exist("wifi-mode", 1);
+                //iot_nvs_set_int_value("wifi-mode", 1);
                 ESP_LOGI(TAG, "Resetting back to factory defaults and rearting.....");
                 esp_restart();
 

@@ -97,6 +97,11 @@ typedef struct {
     void* next;
 } iot_config_linked_list_t;
 
+typedef struct {
+    iot_config_item_t* configEntries[100];
+} iot_config_file_t;
+
+
 extern QueueHandle_t gpioInterruptQueue;
 extern QueueHandle_t gpioTimerInterruptQueue;
 extern QueueHandle_t mqttQueue;
