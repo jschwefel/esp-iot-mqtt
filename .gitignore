@@ -5,4 +5,6 @@ build/
 *.log
 *.orig
 cmake-build-*/
+.devcontainer
+commands.txt
 

@@ -21,9 +21,8 @@ nvs_handle_t iot_init_flash(nvs_handle_t handle, char* nvs_namespace)
     return handle;
 };
 
-char* iot_nvs_load_str_value_if_exist(const char* key)
+char* iot_nvs_load_str_value(const char* key)
 {
-  
     // If either of the two calls fail, abort.
     size_t value_size;
     ESP_ERROR_CHECK(nvs_get_str(iot_nvs_user_handle, key, NULL, &value_size));
@@ -31,63 +30,32 @@ char* iot_nvs_load_str_value_if_exist(const char* key)
     char* value = malloc(value_size);
     ESP_ERROR_CHECK(nvs_get_str(iot_nvs_user_handle, key, value, &value_size));
 
-    
     return value;
 }
 
-bool iot_nvs_set_str_value_if_exist(const char* key, char* value)
+bool iot_nvs_set_str_value(const char* key, char* value)
 {
-
     ESP_ERROR_CHECK(nvs_set_str(iot_nvs_user_handle, key, value));
+
     return true;
+}
 
-/*     
-    size_t value_size;
-    if(nvs_get_str(iot_nvs_user_handle, key, NULL, &value_size) == ESP_OK)
-    {
-
-        if(nvs_set_str(iot_nvs_user_handle, key, value) == ESP_OK)
-        {
-            return true;
-        }
-        else
-        {
-            return false;
-        }
-
-    } 
-    return false;
-
- */}
-
-bool iot_nvs_set_int_value_if_exist(const char* key, int32_t value)
+bool iot_nvs_set_int_value(const char* key, int32_t value)
 {
-
     ESP_ERROR_CHECK(nvs_set_i32(iot_nvs_user_handle, key, value));
+
     return true;
-
-/* 
-    int32_t value_pass = value;
-    if(nvs_set_i32(iot_nvs_user_handle, key, value_pass) == ESP_OK)
-    {
-        return true;
-    } 
-
-    return false;
-
- */}
+}
 
 int32_t iot_nvs_load_int_value_if_exist(const char* key)
 {
     int32_t value = -1;
     ESP_ERROR_CHECK(nvs_get_i32(iot_nvs_user_handle, key, &value));
 
-  
-/* 
-    esp_err_t err = nvs_get_i32(iot_nvs_user_handle, key, &value);
-    assert(err == ESP_OK || err == ESP_ERR_NVS_NOT_FOUND); //Should I change this?
-    // if ESP_ERR_NVS_NOT_FOUND was returned, max_buffer_size will still
-    // have its default value.
- */
     return value;
+}
+
+bool ios_nvs_set_blob(const char* key, void* value)
+{
+    return true;
 }

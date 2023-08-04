@@ -2,19 +2,16 @@
 #include "iot_gpio_interrupt.h"
 #include "iot_wifi.h"
 #include "iot_mqtt.h"
-/*
- * Test interrupt handling on a GPIO.
- * In this fragment we watch for a change on the input signal
- * of GPIO 25.  When it goes high, an interrupt is raised which
- * adds a message to a queue which causes a task that is blocking
- * on the queue to wake up and process the interrupt.
- */
-#include <driver/gpio.h>
 #include <esp_log.h>
+#include "iot_config.h"
+
+
+
+#include <driver/gpio.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/queue.h>
 #include <freertos/task.h>
-#include "iot_config.h"
+
 //#include "sdkconfig.h"
 
 
@@ -26,8 +23,54 @@ void app_main(void)
     globals_init();
 
      
-    init_wifi();
-    iot_start_mqtt();
+    //init_wifi();
+    //iot_start_mqtt();
+
+
+
+
+
+iot_isr_params_t jsonTest = {
+    .intrPin = GPIO_NUM_0,
+    .intrSwitchType = IOT_ISR_SWITCH_TOGGLE,
+    .outPin = GPIO_NUM_1,
+    .outInvert = true,
+    .timerDelay = 5000,
+    .mqttSubTopic = "/JSONTest",
+};
+
+
+iot_config_item_t configItemTest0 = {
+    .configItem = &jsonTest,
+    .configKey = "JSON_Test-1",
+    .configItemType = IOT_CONFIG_SIMPLE_SWITCH,
+};
+
+iot_isr_params_t lindaTest = {
+    .intrPin = GPIO_NUM_0,
+    .intrSwitchType = IOT_ISR_SWITCH_TOGGLE,
+    .outPin = GPIO_NUM_1,
+    .outInvert = true,
+    .timerDelay = 5000,
+    .mqttSubTopic = "/JSONTest",
+};
+
+
+iot_config_item_t configItemTest1 = {
+    .configItem = &lindaTest,
+    .configKey = "JSON_Test-1",
+    .configItemType = IOT_CONFIG_SIMPLE_SWITCH,
+};
+
+
+
+iot_config_file_t configFile;
+configFile.configEntries[0] = &configItemTest0;
+configFile.configEntries[1] = &configItemTest1;
+
+nvs_set_blob(iot_nvs_user_handle, "ConfigData", &configFile, sizeof(configFile));
+
+printf("Config File: %p\n", configFile.configEntries[1]);
 
 
 
@@ -63,11 +106,7 @@ void app_main(void)
 
 
 
-
-
-
-
-
+/*
 
 
     iot_intr_gpio_set_config("Task 0", GPIO_NUM_0, IOT_GPIO_PULL_UP,
@@ -99,7 +138,7 @@ void app_main(void)
 
 
 
-
+*/
    
 }
 
