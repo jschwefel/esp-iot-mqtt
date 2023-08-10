@@ -4,12 +4,11 @@
 #include "esp_log.h"
 #include "iot_globals.h"
 #include "iot_utils.h"
+#include "iot_structs.h"
 
 static void log_error_if_nonzero(const char *message, int error_code);
 static void mqtt_app_start(void);
 static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data);
-
-
 
 static void log_error_if_nonzero(const char *message, int error_code)
 {
@@ -93,6 +92,5 @@ void iot_send_mqtt(iot_mqtt_message_t* mqttMessage)
 {
     // Will eventually queue the the mqtt publish events. 
     // esp_mqtt_client_enqueue(iotMqttClient, concat(baseTopic, mqttMessage->topic), mqttMessage->data, 0, mqttMessage->qos, mqttMessage->retain, true);
-    
     esp_mqtt_client_publish(iotMqttClient, concat(baseTopic, mqttMessage->topic), mqttMessage->data, 0, mqttMessage->qos, mqttMessage->retain);
 }
