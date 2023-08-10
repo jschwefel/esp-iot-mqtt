@@ -1,5 +1,6 @@
 #pragma once
 #include "iot_globals.h"
+#include "iot_structs.h"
 
 
 void iot_start_mqtt(void);

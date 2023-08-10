@@ -1,5 +1,2 @@
 key,type,encoding,value
 configuration,namespace,,
-wifi-mode,data,i32,2
-wifi-ssid,data,string,schwefel
-wifi-passwd,data,string,0101020221

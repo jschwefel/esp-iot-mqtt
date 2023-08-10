@@ -1,10 +1,8 @@
-.vscode/
 build/
-*.bin
-*.old
-*.log
-*.orig
-cmake-build-*/
-.devcontainer
-commands.txt
-
+sdkconfig
+sdkconfig.old
+cmake-*/
+**.bin
+.git/
+debug.log
+**/test.*

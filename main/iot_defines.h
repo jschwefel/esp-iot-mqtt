@@ -1,6 +1,7 @@
-/* This file was automatically generated.  Do not edit! */
-#undef INTERFACE
 #pragma once
+#include <limits.h>
+
+#define IOT_CONFIG_KEY          "config_data"
 
 
 #define IOT_DEFAULT_WIFI_BASE               "esp-iot-mqtt-"
@@ -17,3 +18,8 @@
 #define IOT_KEY_WIFI_MODE                   "wifi-mode"
 #define IOT_KEY_WIFI_SSID                   "wifi-ssid"
 #define IOT_KEY_WIFI_PASS                   "wifi-passwd"
+
+
+
+
+#define ENOUGH ((CHAR_BIT * sizeof(int) - 1) / 3 + 2)

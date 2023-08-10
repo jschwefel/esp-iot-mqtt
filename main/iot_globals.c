@@ -1,43 +1,27 @@
-#include "iot_globals.h"
-#include "iot_nvs.h"
-#include "iot_utils.h"
+#include "cJSON.h"
+#include "iot_structs.h"
 #include "nvs_flash.h"
+#include "iot_nvs.h"
+#include "mqtt_client.h"
+
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
-//#include "freertos/task.h"
-#include "mqtt_client.h"
-//#include "driver/timer.h"
-#include "iot_config.h"
 
+const char* TAG = "ESP-IOT-MQTT";
 
-const char *TAG = "ESP-IOT-MQTT";
+//Need top convert this to configurable.
+const char* baseTopic = "/ESP-IOT-MQTT";
 
-iot_configuration_s iot_configuration;
+cJSON* iotConfiguration;
 nvs_handle_t iot_nvs_user_handle;
-QueueHandle_t gpioInterruptQueue;
-QueueHandle_t gpioTimerInterruptQueue;
-QueueHandle_t mqttQueue;
+QueueHandle_t simpleSwitchInreQueue;
 esp_mqtt_client_handle_t iotMqttClient;
-char* baseTopic;
-ht* iotConfigHashTable;
+iot_wifi_conf_t iot_wifi_conf;
 
-
-void globals_init(void)
-{
+void iot_init(void) {
+    iotConfiguration = cJSON_CreateObject();
     ESP_ERROR_CHECK(gpio_install_isr_service(ESP_INTR_FLAG_LEVEL3));
-    
     iot_nvs_user_handle = iot_init_flash(iot_nvs_user_handle, "configuration");
-    gpioInterruptQueue = xQueueCreate(10, sizeof(iot_isr_params_t));
-    gpioTimerInterruptQueue = xQueueCreate(10, sizeof(iot_isr_params_t));
-    mqttQueue = xQueueCreate(50, sizeof(int));
+    simpleSwitchInreQueue = xQueueCreate(10, sizeof(iot_intr_switch_simple_config_t));
 
-    // Need to make configurable
-    char* base = "iot-";
-    char* lastMac = get_mac_address_half_low();
-    baseTopic = concat(base, lastMac);
-    iot_create_config_hashtable();
-
-    //handle = iot_nvs_user_handle;
-
-    //mac_half_low = get_mac_address_half_low();
-};
+}

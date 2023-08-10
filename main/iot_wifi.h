@@ -4,4 +4,4 @@
 
 #include <stdbool.h>
 
-bool init_wifi();
+bool iot_start_wifi();
