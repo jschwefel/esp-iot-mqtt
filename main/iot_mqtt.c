@@ -25,7 +25,8 @@ void iot_start_mqtt(void)
 static void mqtt_app_start(void)
 {
     esp_mqtt_client_config_t mqtt_cfg = {
-        .broker.address.uri = "mqtt://homeassistant.local",
+//        .broker.address.uri = "mqtt://homeassistant.local",
+        .broker.address.uri = "mqtt://172.31.1.10",
         .credentials.username = "mqtt_user",
         .credentials.authentication.password = "mqtt_pass",
     };
@@ -90,7 +91,5 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
 
 void iot_send_mqtt(iot_mqtt_message_t* mqttMessage)
 {
-    // Will eventually queue the the mqtt publish events. 
-    // esp_mqtt_client_enqueue(iotMqttClient, concat(baseTopic, mqttMessage->topic), mqttMessage->data, 0, mqttMessage->qos, mqttMessage->retain, true);
     esp_mqtt_client_publish(iotMqttClient, concat(baseTopic, mqttMessage->topic), mqttMessage->data, 0, mqttMessage->qos, mqttMessage->retain);
 }

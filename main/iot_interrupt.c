@@ -155,8 +155,7 @@ static void iot_intr_switch_toggle(iot_intr_switch_simple_config_t *intrParams)
 
     // Check to see if the input in inverted. Inverted input are
     // used when the sensor uses an "Acrive Low" output.
-    bool intrPin = gpio_normailized_state(intrParams->outInvert, intrParams->intrPin);
-
+    uint32_t intrPinNorm = gpio_normailized_state(intrParams->outInvert, intrParams->intrPin);
     iot_mqtt_message_t mqttMessage = {
         .topic = intrParams->mqttSubTopic,
         .qos = 0,
@@ -164,17 +163,18 @@ static void iot_intr_switch_toggle(iot_intr_switch_simple_config_t *intrParams)
     };
 
 
-    if(intrPin) {
+    if(intrPinNorm != 0) {
         mqttMessage.data = intrParams->mqttDataOn;
-//        iot_send_mqtt(intrParams->mqttSubTopic, intrParams->mqttDataOn);
         iot_send_mqtt(&mqttMessage);
     } else {
         mqttMessage.data = intrParams->mqttDataOff;
-////        iot_send_mqtt(intrParams->mqttSubTopic, intrParams->mqttDataOff);
         iot_send_mqtt(&mqttMessage);
     }
+    //gpio_set_level(1,1);
 
-    if(indicator) { gpio_set_level(intrParams->outPin, intrPin); }
+    if(indicator) { 
+        gpio_set_level(intrParams->outPin, intrPinNorm); 
+    }
 
 }
 

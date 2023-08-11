@@ -13,8 +13,8 @@ char* get_mac_address_half_low() {
     return macLastSix;
 }
 
-bool gpio_normailized_state(bool inverted, uint32_t gpioPin) {
-    bool pinBool = gpio_get_level(gpioPin) == 0 ? false : true;
+uint32_t gpio_normailized_state(bool inverted, uint32_t gpioPin) {
+    uint32_t pinBool = gpio_get_level(gpioPin) == 0 ? 0 : 1;
     if (inverted) {
         return !pinBool;
     } else {

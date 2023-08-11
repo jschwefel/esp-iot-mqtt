@@ -9,3 +9,4 @@ idf_component_register(SRCS "iot_mqtt.c" "iot_utils.c" "iot_nvs.c" "esp-iot-mqtt
 
                             "dummy.c"
                     INCLUDE_DIRS ".")
+#spiffs_create_partition_image(storage ../storage FLASH_IN_PROJECT)

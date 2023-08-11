@@ -18,6 +18,8 @@ iot_config_linked_list_t* dummy_intiConfig(void) {
         jasonTest->outInvert = true;
         jasonTest->timerDelay = 5000;
         jasonTest->mqttSubTopic = "/JSONTest";
+        jasonTest->mqttDataOn = "On";
+        jasonTest->mqttDataOff = "Off";
 
     iot_config_item_t* configItemTest0 = calloc(1, sizeof(iot_config_item_t));
         configItemTest0->configItem = jasonTest;
