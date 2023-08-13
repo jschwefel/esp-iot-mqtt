@@ -15,6 +15,7 @@ iot_config_linked_list_t* dummy_intiConfig(void) {
         jasonTest->intrPin = GPIO_NUM_0;
         jasonTest->intrSimpleSwitchType = IOT_INTR_SWITCH_TOGGLE;
         jasonTest->outPin = GPIO_NUM_1;
+        jasonTest->intrPull = IOT_GPIO_PULL_UP;
         jasonTest->outInvert = true;
         jasonTest->timerDelay = 5000;
         jasonTest->mqttSubTopic = "/JSONTest";
@@ -37,7 +38,7 @@ iot_config_linked_list_t* dummy_intiConfig(void) {
         lindaTest->intrPin = GPIO_NUM_2;
         lindaTest->intrSimpleSwitchType = IOT_INTR_SWITCH_ONE_SHOT_POS;
         lindaTest->intrPull = IOT_GPIO_PULL_DOWN;
-        lindaTest->intrType = GPIO_INTR_POSEDGE;
+        lindaTest->intrType = GPIO_INTR_NEGEDGE;
         lindaTest->outPin = GPIO_NUM_3;
         lindaTest->outInvert = false;
         lindaTest->outPull = IOT_GPIO_PULL_DOWN;

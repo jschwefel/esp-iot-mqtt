@@ -44,11 +44,9 @@ typedef struct {
     int32_t mode;
     char* ssid;
     char* passwd;
-} wifi_connection_t;
-
-typedef struct {
-    wifi_connection_t wifi_settings;
 } iot_wifi_conf_t;
+
+
 
 
 

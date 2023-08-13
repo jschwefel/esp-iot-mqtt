@@ -23,3 +23,5 @@
 
 
 #define ENOUGH ((CHAR_BIT * sizeof(int) - 1) / 3 + 2)
+
+#define INDEX_HTML_PATH "/spiffs/index.html"
