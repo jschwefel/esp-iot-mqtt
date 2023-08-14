@@ -8,13 +8,49 @@
 #include "iot_nvs.h"
 #include "iot_defines.h"
 
-
+char* get_web_server_file(const char* uri);
 
 void update_settings(char* postString);
 
-char index_html[4096];
-char response_data[4096];
+//char response_data[4096];
+//char responseData[IOT_HTTPD_RESPONSE_BUFFER];
 
+char* get_web_server_file(const char* uri)
+{
+    //This should not be needed.
+    //memset((void *)fileData, 0, sizeof(fileData));
+
+    struct stat st;
+
+
+    char* filePath = NULL;
+    const char slash = '/';
+    if(uri[strlen(uri)-1] == slash) {
+        filePath = concat("/spiffs", concat(uri, "index.html"));
+    } else {
+        filePath = concat("/spiffs", uri);
+    }
+
+    if (stat(filePath, &st))
+    {
+        ESP_LOGE(TAG, "%s not found", filePath);
+        return NULL;
+    }
+
+    char* fileData = malloc((size_t)st.st_size);
+
+
+    FILE *fp = fopen(filePath, "r");
+    if (fread(fileData, st.st_size, 1, fp) == 0)
+    {
+        ESP_LOGE(TAG, "fread failed");
+    }
+    fclose(fp);
+    //fread adds 5 garbage byts on the end, so NULLing the proper last byte
+    fileData[st.st_size] = '\0';
+    return fileData;
+}
+/* 
 void init_web_page_buffer(void)
 {
     esp_vfs_spiffs_conf_t conf = {
@@ -40,13 +76,22 @@ void init_web_page_buffer(void)
     }
     fclose(fp);
 }
-
+ */
 esp_err_t send_web_page(httpd_req_t *req)
 {
+    
+    char* fileData = get_web_server_file(req->uri);
+    
     int response;
 
-    sprintf(response_data, index_html, iot_wifi_conf.ssid, iot_wifi_conf.passwd);
-    response = httpd_resp_send(req, response_data, HTTPD_RESP_USE_STRLEN);
+    //sprintf(response_data, fileData, iot_wifi_conf.ssid, iot_wifi_conf.passwd);
+    //response = httpd_resp_send(req, response_data, HTTPD_RESP_USE_STRLEN);
+    //char responseData[IOT_HTTPD_RESPONSE_BUFFER];
+    //memset((void *)responseData, 0, sizeof(responseData));
+    //Only works when 'responseData[] is declared global scope. Otherwise panic.
+    //sprintf(responseData, fileData, iot_wifi_conf.ssid, iot_wifi_conf.passwd);
+    response = httpd_resp_send(req, fileData, HTTPD_RESP_USE_STRLEN);
+
     return response;
 }
 
@@ -138,8 +183,14 @@ void update_settings(char* postString)
     }
 }
 
-httpd_uri_t uri_get = {
+httpd_uri_t uri_index_get = {
     .uri = "/",
+    .method = HTTP_GET,
+    .handler = get_handler,
+    .user_ctx = NULL};
+
+httpd_uri_t uri_wild_get = {
+    .uri = "/*",
     .method = HTTP_GET,
     .handler = get_handler,
     .user_ctx = NULL};
@@ -152,14 +203,23 @@ httpd_uri_t uri_post = {
 
 httpd_handle_t iot_start_httpd(void)
 {
+    esp_vfs_spiffs_conf_t conf = {
+        .base_path = "/spiffs",
+        .partition_label = NULL,
+        .max_files = 5,
+        .format_if_mount_failed = false};
+
+    esp_vfs_spiffs_register(&conf);
+
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
     httpd_handle_t server = NULL;
-    
-    init_web_page_buffer();
+    config.uri_match_fn = httpd_uri_match_wildcard;
+    //init_web_page_buffer();
 
     if (httpd_start(&server, &config) == ESP_OK)
     {
-        httpd_register_uri_handler(server, &uri_get);
+        httpd_register_uri_handler(server, &uri_index_get);
+        httpd_register_uri_handler(server, &uri_wild_get);
         httpd_register_uri_handler(server, &uri_post);
         
     }

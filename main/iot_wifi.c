@@ -190,7 +190,7 @@ static void wifi_init_sta(iot_wifi_conf_t settings)
             .threshold.authmode = WIFI_AUTH_OPEN,
             .sae_pwe_h2e = WPA3_SAE_PWE_BOTH,
             .sae_h2e_identifier = "*",
-        
+         
         },
     }; 
     strncpy((char*)wifi_config.sta.ssid, (char*)settings.ssid, 32);

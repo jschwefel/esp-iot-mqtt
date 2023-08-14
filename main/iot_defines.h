@@ -24,4 +24,5 @@
 
 #define ENOUGH ((CHAR_BIT * sizeof(int) - 1) / 3 + 2)
 
-#define INDEX_HTML_PATH "/spiffs/index.html"
+#define INDEX_HTML_PATH                     "/spiffs/index.html"
+#define IOT_HTTPD_RESPONSE_BUFFER           6000
