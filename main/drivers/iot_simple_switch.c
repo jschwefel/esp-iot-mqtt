@@ -83,11 +83,18 @@ static esp_err_t iot_intr_simple_switch_setup(iot_intr_switch_simple_config_t* i
 {
     // Confiure pins.
     // Pretty sure there is a better way. But for now, it works.
+    bool intrPullUp = ((intrConfig->intrPull == IOT_GPIO_PULL_UP) || (intrConfig->intrPull == IOT_GPIO_PULL_BOTH)) ? true : false;
+    bool intrPullDown = ((intrConfig->intrPull == IOT_GPIO_PULL_DOWN) || (intrConfig->intrPull == IOT_GPIO_PULL_BOTH)) ? true : false;
+    bool outPullUp = ((intrConfig->outPull == IOT_GPIO_PULL_UP) || (intrConfig->intrPull == IOT_GPIO_PULL_BOTH)) ? true : false;
+    bool outPullDown = ((intrConfig->outPull == IOT_GPIO_PULL_DOWN) || (intrConfig->intrPull == IOT_GPIO_PULL_BOTH)) ? true : false;
+
+/* 
     bool intrPullUp = ((intrConfig->intrPull == 0) || (intrConfig->intrPull == 2)) ? true : false;
     bool intrPullDown = ((intrConfig->intrPull == 1) || (intrConfig->intrPull == 2)) ? true : false;
     bool outPullUp = ((intrConfig->outPull == 0) || (intrConfig->intrPull == 2)) ? true : false;
     bool outPullDown = ((intrConfig->outPull == 1) || (intrConfig->intrPull == 2)) ? true : false;
 
+ */
     gpio_int_type_t intr = GPIO_INTR_DISABLE;
     switch(intrConfig->intrSimpleSwitchType) {
         case IOT_INTR_SWITCH_TOGGLE :
@@ -155,7 +162,7 @@ static void iot_intr_switch_toggle(iot_intr_switch_simple_config_t *intrParams)
 
     // Check to see if the input in inverted. Inverted input are
     // used when the sensor uses an "Acrive Low" output.
-    uint32_t intrPinNorm = gpio_normailized_state(intrParams->outInvert, intrParams->intrPin);
+    uint32_t intrPinNorm = gpio_normailized_state(intrParams->inputInvert, intrParams->intrPin);
     iot_mqtt_message_t mqttMessage = {
         .topic = intrParams->mqttSubTopic,
         .qos = 0,
@@ -227,7 +234,7 @@ static void gpio_timer_intr_callback(TimerHandle_t timer)
 
 void iot_intr_gpio_set_config(char* intrName, gpio_num_t intrPin, iot_gpio_pull_t intrPull,
     gpio_int_type_t intrType, iot_simple_switch_type_t intrSimpleSwitchType, int timeDelay,
-    gpio_num_t outPin, iot_gpio_pull_t outPull, bool outInvert, char* mqttSubTopic,
+    gpio_num_t outPin, iot_gpio_pull_t outPull, bool inputInvert, char* mqttSubTopic,
     char* mqttOn, char* mqttOff)
 {
     iot_intr_switch_simple_config_t* intrGpioConfig = malloc(sizeof(iot_intr_switch_simple_config_t));
@@ -239,7 +246,7 @@ void iot_intr_gpio_set_config(char* intrName, gpio_num_t intrPin, iot_gpio_pull_
         intrGpioConfig->timerDelay = timeDelay;
         intrGpioConfig->outPin = outPin;
         intrGpioConfig->outPull = outPull;
-        intrGpioConfig->outInvert = outInvert;
+        intrGpioConfig->inputInvert = inputInvert;
         intrGpioConfig->mqttSubTopic = mqttSubTopic;
         intrGpioConfig->mqttDataOn = mqttOn;
         intrGpioConfig->mqttDataOff = mqttOff;

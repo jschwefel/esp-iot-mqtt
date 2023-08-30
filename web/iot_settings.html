@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Settings</title>
+    <link rel="stylesheet" href="css/settings.css">
+    <script src="js/esp-iot-mqtt.js"></script>
+</head>
+<body>
+<div class="form-container">
+
+    <form>
+        <h1>WiFi Settings</h1>
+        <div class="form-group">
+            <label for="wifi-ssid" class="form-label">SSID</label>
+            <input id="wifi-ssid" class="form-input" type="text" required value="%s">
+            <label for="wifi-pass" class="form-label">Password</label>
+            <input id="wifi-pass" class="form-input" type="password">
+            <label>Show Password:</label>
+            <input type="checkbox" onchange="togglePasswordVisibility()">
+            <br>
+        </div>
+        <br>
+        <hr>
+        <br>
+        <h1>MQTT Settings</h1>
+        <div class="form-group">
+            <label for="mqtt-broker" class="form-label">Broker IP</label>
+            <input id="mqtt-broker" class="form-input" type="text" required value="%s">
+            <label for="mqtt-secure">Secure Connection:</label>
+            <input type="checkbox" id="mqtt-secure" name="secureConnection">
+            <br>
+        </div>
+        <button class="form-submit" type="submit">Submit</button>
+    </form>
+</div>
+</body>
+</html>
