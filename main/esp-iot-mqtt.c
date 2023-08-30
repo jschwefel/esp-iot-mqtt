@@ -12,7 +12,7 @@
 
 
 #include "dummy.h"
-
+#include "iot_simple_switch.h"
 
 
 void app_main(void)
