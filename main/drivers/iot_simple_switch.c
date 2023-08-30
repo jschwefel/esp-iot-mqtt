@@ -1,7 +1,7 @@
-#include "iot_globals.h"
-#include "iot_enums.h"
-#include "iot_mqtt.h"
-#include "iot_utils.h"
+#include "../iot_globals.h"
+#include "../iot_enums.h"
+#include "../iot_mqtt.h"
+#include "../iot_utils.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -9,13 +9,13 @@
 #include "freertos/queue.h"
 #include "freertos/task.h"
 #include "freertos/timers.h"
-#include "iot_interrupt.h"
+#include "iot_simple_switch.h"
 #include "freertos/portmacro.h"
 #include "esp_log.h"
 #include "driver/gpio.h"
 #include "driver/gpio_filter.h"
-#include "iot_config.h"
-#include "iot_enums.h"
+#include "../iot_config.h"
+#include "../iot_enums.h"
 
 
 

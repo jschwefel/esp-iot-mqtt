@@ -11,25 +11,31 @@
 <div class="form-container">
 
     <form>
-        <h1>WiFi Settings</h1>
+        <h2>WiFi Settings</h2>
         <div class="form-group">
             <label for="wifi-ssid" class="form-label">SSID</label>
             <input id="wifi-ssid" class="form-input" type="text" required value="%s">
             <label for="wifi-pass" class="form-label">Password</label>
             <input id="wifi-pass" class="form-input" type="password">
             <label>Show Password:</label>
-            <input type="checkbox" onchange="togglePasswordVisibility()">
+            <input type="checkbox" id="wifi-pass-visible" onchange="togglePasswordVisibility('wifi-pass')">
             <br>
         </div>
         <br>
         <hr>
         <br>
-        <h1>MQTT Settings</h1>
+        <h2>MQTT Settings</h2>
         <div class="form-group">
             <label for="mqtt-broker" class="form-label">Broker IP</label>
             <input id="mqtt-broker" class="form-input" type="text" required value="%s">
             <label for="mqtt-secure">Secure Connection:</label>
             <input type="checkbox" id="mqtt-secure" name="secureConnection">
+            <label for="mqtt-user" class="form-label">Username</label>
+            <input id="mqtt-user" class="form-input" type="text" required value="%s">
+            <label for="mqtt-pass" class="form-label">Password</label>
+            <input id="mqtt-pass" class="form-input" type="password" required>
+            <label>Show Password:</label>
+            <input type="checkbox" id="mqtt-pass-visible" onchange="togglePasswordVisibility('mqtt-pass')">
             <br>
         </div>
         <button class="form-submit" type="submit">Submit</button>

@@ -19,10 +19,19 @@
 #define IOT_KEY_WIFI_SSID                   "wifi-ssid"
 #define IOT_KEY_WIFI_PASS                   "wifi-passwd"
 
+#define IOT_KEY_MQTT_BROKER                 "mqtt-broker"
+
 
 
 
 #define ENOUGH ((CHAR_BIT * sizeof(int) - 1) / 3 + 2)
 
-#define INDEX_HTML_PATH                     "/spiffs/index.html"
-#define IOT_HTTPD_RESPONSE_BUFFER           6000
+#define IOT_HTTPD_RESPONSE_BUFFER_ADD       100
+#define IOT_WEB_SYSTEM_SETTING_URI          "/system-settings.html"
+#define IOT_WEB_IOT_SETTING_URI             "/iot-settings.html"
+
+#define IOT_CONFIG_TYPE_MAX_ENTRIES         9       // 0 based
+
+#define IOT_CONFIG_TYPE_PREFIX              "iot-%02d-"
+#define IOT_CONFIG_MAX_CONFIG_STR_LEN       255
+

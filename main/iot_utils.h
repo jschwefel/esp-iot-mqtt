@@ -14,3 +14,6 @@ char* concat(const char *s1, const char *s2);
 iot_config_linked_list_t* getLastEntry(iot_config_linked_list_t* linkedList);
 int tokenCount(char *string, char *delimeter);
 void stringSplitter(char *string, char *delimeter, char *tokenArray[]);
+void str_replace(char *target, const char *needle, const char *replacement);
+void spiffs_dir(char* directory);
+const char* get_filename_ext(const char *filename);

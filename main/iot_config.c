@@ -6,24 +6,34 @@
 #include "iot_nvs.h"
 #include "iot_defines.h"
 #include "iot_utils.h"
+#include "iot_httpd.h"
 #include "cJSON.h"
+#include "../URLDecode/urldecode.h"
+#include "esp_log.h"
 
 static void serializeConfig(cJSON* tempConfigJson, iot_config_item_t* entry, cJSON* confArray, void* serializeFunction);
 static iot_config_linked_list_t* deserializeConfig(cJSON* tempConfigJson, void* deserializeFunction);
-static cJSON* serialize_iot_intr_switch_simple_config(void* configItemPtr);
-static iot_config_linked_list_t* deserialize_iot_intr_switch_simple_config(char* key, cJSON* configJson);
+cJSON* serialize_iot_intr_switch_simple_config(void* configItemPtr);
+iot_config_linked_list_t* deserialize_iot_intr_switch_simple_config(char* key, cJSON* configJson);
+iot_config_linked_list_t* deserialize_dummy(char* key, cJSON* configJson);
+iot_config_linked_list_t* iot_iot_settings_process_config_update_simple_switch(int sequence, char* queryString);
 
-static iot_config_linked_list_t* deserialize_dummy(char* key, cJSON* configJson);
 
-cJSON* iot_intr_switch_simple_config_array = NULL;
-cJSON* iot_intr_dummy_config_array = NULL;
+//cJSON* iot_intr_switch_simple_config_array = NULL;
+//cJSON* iot_intr_dummy_config_array = NULL;
+
 
 void iot_save_config(iot_config_linked_list_t* iotConfigHead) {
     iot_config_linked_list_t* prev = calloc(1, sizeof(iot_config_linked_list_t));                
     iot_config_linked_list_t* config = iotConfigHead;
+
+    cJSON* iot_intr_switch_simple_config_array = NULL;
+    cJSON* iot_intr_dummy_config_array = NULL;
+
     while(true) {
         iot_config_item_t* entry = config->configEntry;
         cJSON* tempConfigJson = cJSON_CreateObject();
+
         
         switch(entry->configItemType) {
             case IOT_CONFIG_SIMPLE_SWITCH:
@@ -51,6 +61,7 @@ void iot_save_config(iot_config_linked_list_t* iotConfigHead) {
     }
 
     free(prev);
+    cJSON* iotConfiguration = cJSON_CreateObject();
 
     if(iot_intr_switch_simple_config_array != NULL) {
         char key[ENOUGH];
@@ -67,7 +78,9 @@ void iot_save_config(iot_config_linked_list_t* iotConfigHead) {
     char* outJson = cJSON_Print(iotConfiguration);
     iot_nvs_set_blobstr_value(IOT_CONFIG_KEY, outJson);
     printf(outJson);
+    free(iotConfiguration);
 }
+
 
 // I am sure this can be optimized like deserializeConfig
 iot_config_linked_list_t* iot_open_config(void) {
@@ -109,11 +122,14 @@ iot_config_linked_list_t* iot_open_config(void) {
     return configPtr;
 }
 
+
 static void serializeConfig(cJSON* tempConfigJson, iot_config_item_t* entry, cJSON* confArray, void* serializeFunction) {
     cJSON* (*serializer)(void*) = serializeFunction;
     cJSON_AddItemToObject(tempConfigJson, entry->configKey, (*serializer)(entry->configItem));
     cJSON_AddItemToArray(confArray, tempConfigJson);
 }
+
+
 // https://stackoverflow.com/a/58499138
 static iot_config_linked_list_t* deserializeConfig(cJSON* arrayNode, void* deserializeFunction) {
     iot_config_linked_list_t* (*deserializer)(char*, cJSON*) = deserializeFunction;
@@ -151,10 +167,11 @@ static cJSON* serialize_iot_intr_switch_simple_config(void* configItemPtr) {
     cJSON_AddNumberToObject(configJson, "outPin", configItem->outPin);
     cJSON_AddNumberToObject(configJson, "outPull", configItem->outPull);
     cJSON_AddNumberToObject(configJson, "timerDelay", configItem->timerDelay);
-    cJSON_AddNumberToObject(configJson, "outInvert", configItem->outInvert ? true : false);
+    cJSON_AddNumberToObject(configJson, "inputInvert", configItem->inputInvert ? true : false);
  
     return configJson;
 }
+
 
 static iot_config_linked_list_t* deserialize_iot_intr_switch_simple_config(char* key, cJSON* configJson) {
     iot_intr_switch_simple_config_t* simpleSwitchConfig = malloc(sizeof(iot_intr_switch_simple_config_t));
@@ -169,7 +186,7 @@ static iot_config_linked_list_t* deserialize_iot_intr_switch_simple_config(char*
     if(cJSON_HasObjectItem(configJson, "outPin")) {simpleSwitchConfig->outPin = cJSON_GetObjectItem(configJson, "outPin")->valuedouble;}
     if(cJSON_HasObjectItem(configJson, "outPull")) {simpleSwitchConfig->outPull = cJSON_GetObjectItem(configJson, "outPull")->valuedouble;}
     if(cJSON_HasObjectItem(configJson, "timerDelay")) {simpleSwitchConfig->timerDelay = cJSON_GetObjectItem(configJson, "timerDelay")->valuedouble;}
-    if(cJSON_HasObjectItem(configJson, "outInvert")) {simpleSwitchConfig->outInvert = cJSON_GetObjectItem(configJson, "outInvert")->valuedouble != 0 ? true : false;}
+    if(cJSON_HasObjectItem(configJson, "inputInvert")) {simpleSwitchConfig->inputInvert = cJSON_GetObjectItem(configJson, "inputInvert")->valuedouble != 0 ? true : false;}
 
     iot_config_linked_list_t* configListItem = calloc(1, sizeof(iot_config_linked_list_t*));
     iot_config_item_t* configItem = calloc(1, sizeof(iot_config_item_t));
@@ -198,7 +215,7 @@ static iot_config_linked_list_t* deserialize_dummy(char* key, cJSON* configJson)
     if(cJSON_HasObjectItem(configJson, "outPin")) {simpleSwitchConfig->outPin = cJSON_GetObjectItem(configJson, "outPin")->valuedouble;}
     if(cJSON_HasObjectItem(configJson, "outPull")) {simpleSwitchConfig->outPull = cJSON_GetObjectItem(configJson, "outPull")->valuedouble;}
     if(cJSON_HasObjectItem(configJson, "timerDelay")) {simpleSwitchConfig->timerDelay = cJSON_GetObjectItem(configJson, "timerDelay")->valuedouble;}
-    if(cJSON_HasObjectItem(configJson, "outInvert")) {simpleSwitchConfig->outInvert = cJSON_GetObjectItem(configJson, "outInvert")->valuedouble;}
+    if(cJSON_HasObjectItem(configJson, "inputInvert")) {simpleSwitchConfig->inputInvert = cJSON_GetObjectItem(configJson, "inputInvert")->valuedouble;}
 
     iot_config_linked_list_t* configListItem = calloc(1, sizeof(iot_config_linked_list_t*));
     iot_config_item_t* configItem = calloc(1, sizeof(iot_config_item_t));
@@ -211,4 +228,131 @@ static iot_config_linked_list_t* deserialize_dummy(char* key, cJSON* configJson)
     configListItem->next = NULL;
     configListItem->configEntry = configItem;
     return configListItem;
+}
+
+
+char* iot_system_settings_populate_html(char* rawHtml) {
+    char* wifiSsid = iot_nvs_get_str_value(IOT_KEY_WIFI_SSID);
+    char* mqttBroker = iot_nvs_get_str_value(IOT_KEY_MQTT_BROKER);
+
+    size_t htmlLen =  strlen(rawHtml)
+                    + strlen(wifiSsid)
+                    + strlen(mqttBroker);
+
+    char* procHtml = calloc(1, htmlLen);
+    sprintf(procHtml, rawHtml, wifiSsid, mqttBroker);
+    free(rawHtml);
+    return procHtml;
+}
+
+
+void iot_iot_settings_process_config_update(char* queryString) {
+    char configItemTypeChar[5];         // Max of 9999 config item types.
+    iot_config_linked_list_t* head = NULL;
+    iot_config_linked_list_t* tail = NULL;
+
+    for(int i = 0; i <= IOT_CONFIG_TYPE_MAX_ENTRIES; i++) {
+        char* fstring = IOT_CONFIG_TYPE_PREFIX;
+        char* configItemEntry = malloc(sizeof(char) * 12); // 'iot-XX-type' = 11 char + NULL
+        sprintf(configItemEntry, fstring, i);
+        configItemEntry = concat(configItemEntry, (char*)"type");
+        esp_err_t err = httpd_query_key_value(queryString, configItemEntry, configItemTypeChar, 4);
+        if(err != ESP_OK) {
+            // Should flesh this out more.
+            break;
+        }
+        iot_config_item_type_t configItemType = atoi(configItemTypeChar);
+        printf("%02d\n", configItemType);
+        iot_config_linked_list_t* temp = calloc(1, sizeof(*temp));
+        switch (configItemType) {
+            case IOT_CONFIG_SIMPLE_SWITCH:
+                ESP_LOGI(TAG, "Query string: %s\n", queryString);
+                temp = iot_iot_settings_process_config_update_simple_switch(i, queryString);
+                break;
+            
+            default:
+                break;
+        }
+        
+        temp->next = NULL;
+        if (tail == NULL) {
+            head = temp;
+            tail = temp;
+        } else {
+            tail->next = temp;
+            tail = temp;
+        }
+
+        //free(configItemEntry);
+    }
+    iot_save_config(head);
+}
+
+static iot_config_linked_list_t* iot_iot_settings_process_config_update_simple_switch(int sequence, char* queryString) {
+    ESP_LOGI(TAG, "Query string: %s\n", queryString);
+    char* prefix = malloc(sizeof(char) * 8);     // 'iot-XX-' = 7 char + NULL
+    sprintf(prefix, IOT_CONFIG_TYPE_PREFIX, sequence);
+    
+    iot_intr_switch_simple_config_t* config = malloc(sizeof(iot_intr_switch_simple_config_t));
+    char tempChar[IOT_CONFIG_MAX_CONFIG_STR_LEN];
+
+    // Make sure we have a task name
+    if (httpd_query_key_value(queryString, concat(prefix, (char*)"intrTaskName"), tempChar, IOT_CONFIG_MAX_CONFIG_STR_LEN) == ESP_OK) {
+        config->intrTaskName = urlDecode(tempChar);
+        
+        httpd_query_key_value(queryString, concat(prefix, (char*)"intrPin"), tempChar, IOT_CONFIG_MAX_CONFIG_STR_LEN);
+        config->intrPin = atoi(tempChar);
+
+        httpd_query_key_value(queryString, concat(prefix, (char*)"inputInvert"), tempChar, IOT_CONFIG_MAX_CONFIG_STR_LEN);
+        config->inputInvert= atoi(tempChar);
+
+        httpd_query_key_value(queryString, concat(prefix, (char*)"intrPull"), tempChar, IOT_CONFIG_MAX_CONFIG_STR_LEN);
+        config->intrPull = atoi(tempChar);
+
+        httpd_query_key_value(queryString, concat(prefix, (char*)"intrType"), tempChar, IOT_CONFIG_MAX_CONFIG_STR_LEN);
+        config->intrType = atoi(tempChar);
+
+        httpd_query_key_value(queryString, concat(prefix, (char*)"intrSimpleSwitchType"), tempChar, IOT_CONFIG_MAX_CONFIG_STR_LEN);
+        config->intrSimpleSwitchType = atoi(tempChar);
+
+        httpd_query_key_value(queryString, concat(prefix, (char*)"mqttSubTopic"), tempChar, IOT_CONFIG_MAX_CONFIG_STR_LEN);
+        config->mqttSubTopic = urlDecode(tempChar);
+
+        httpd_query_key_value(queryString, concat(prefix, (char*)"mqttDataOn"), tempChar, IOT_CONFIG_MAX_CONFIG_STR_LEN);
+        config->mqttDataOn = urlDecode(tempChar);
+
+        httpd_query_key_value(queryString, concat(prefix, (char*)"mqttDataOff"), tempChar, IOT_CONFIG_MAX_CONFIG_STR_LEN);
+        config->mqttDataOff = urlDecode(tempChar);
+
+        if(httpd_query_key_value(queryString, concat(prefix, (char*)"outPin"), tempChar, IOT_CONFIG_MAX_CONFIG_STR_LEN) == ESP_OK) {
+            int test = atoi(tempChar);
+            if(test != GPIO_NUM_NC) {
+                config->outPin= test;
+                httpd_query_key_value(queryString, concat(prefix, (char*)"outPull"), tempChar, IOT_CONFIG_MAX_CONFIG_STR_LEN);
+                config->outPull =atoi(tempChar);
+            }
+        }        
+
+        if((config->intrSimpleSwitchType == IOT_INTR_SWITCH_TIMER_POS) || config->intrSimpleSwitchType == IOT_INTR_SWITCH_TIMER_NEG) {
+            httpd_query_key_value(queryString, concat(prefix, (char*)"timerDelay"), tempChar, IOT_CONFIG_MAX_CONFIG_STR_LEN);
+            config->timerDelay = atoi(tempChar);  
+        } else {
+            config->timerDelay = 500;  
+        }
+    }
+
+    iot_config_item_t* configItem = malloc(sizeof(iot_config_item_t));
+    configItem->configItemType = IOT_CONFIG_SIMPLE_SWITCH;
+    configItem->configKey = config->intrTaskName;
+    configItem->configItem = config;
+
+//    iot_config_linked_list_t* configList = malloc(sizeof(iot_config_linked_list_t));
+    iot_config_linked_list_t* configList = calloc(1, sizeof(iot_config_linked_list_t*));
+    configList->configEntry = configItem;
+    configList->next = NULL;
+
+    free(prefix);
+
+    return configList;
+
 }

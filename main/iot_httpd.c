@@ -7,102 +7,127 @@
 #include "iot_utils.h"
 #include "iot_nvs.h"
 #include "iot_defines.h"
+#include "iot_config.h"
+#include "../URLDecode/urldecode.h"
 
-char* get_web_server_file(const char* uri);
+static httpd_req_t* set_content_type(httpd_req_t* req);
+static char* get_web_server_file(const char* uri);
+static void update_settings(char* postString);
+static esp_err_t get_handler(httpd_req_t *req);
+static esp_err_t post_handler(httpd_req_t *req);
 
-void update_settings(char* postString);
 
-//char response_data[4096];
-//char responseData[IOT_HTTPD_RESPONSE_BUFFER];
-
-char* get_web_server_file(const char* uri)
+static char* get_web_server_file(const char* uri)
 {
-    //This should not be needed.
-    //memset((void *)fileData, 0, sizeof(fileData));
-
-    struct stat st;
-
-
     char* filePath = NULL;
     const char slash = '/';
     if(uri[strlen(uri)-1] == slash) {
-        filePath = concat("/spiffs", concat(uri, "index.html"));
+        filePath = concat(uri, "index.html");
     } else {
-        filePath = concat("/spiffs", uri);
+        filePath = (char*)uri;
     }
 
+    struct stat st;
     if (stat(filePath, &st))
     {
         ESP_LOGE(TAG, "%s not found", filePath);
         return NULL;
     }
 
-    char* fileData = malloc((size_t)st.st_size);
-
-
+    char* fileData = calloc(1, st.st_size + 1);
     FILE *fp = fopen(filePath, "r");
-    if (fread(fileData, st.st_size, 1, fp) == 0)
+    if (fread(fileData, 1, st.st_size, fp) == 0)
     {
         ESP_LOGE(TAG, "fread failed");
     }
     fclose(fp);
-    //fread adds 5 garbage byts on the end, so NULLing the proper last byte
-    fileData[st.st_size] = '\0';
+    ESP_LOGI(TAG, "Serving file: %s", filePath);
     return fileData;
 }
-/* 
-void init_web_page_buffer(void)
-{
-    esp_vfs_spiffs_conf_t conf = {
-        .base_path = "/spiffs",
-        .partition_label = NULL,
-        .max_files = 5,
-        .format_if_mount_failed = false};
 
-    esp_vfs_spiffs_register(&conf);
 
-    memset((void *)index_html, 0, sizeof(index_html));
-    struct stat st;
-    if (stat(INDEX_HTML_PATH, &st))
-    {
-        ESP_LOGE(TAG, "index.html not found");
-        return;
+static httpd_req_t* set_content_type(httpd_req_t* req){
+    char* uriExt = get_filename_ext((char*)req->uri);
+    const char* cssExt =        "css";
+    const char* jsExt =         "js";
+    const char* pngExt =        "image/png";
+    const char* jsonExt =       "application/json";
+    const char* webpExt =       "image/webp";
+    const char* jpegExt =       "js";
+    const char* jpgExt =        "js";
+
+    if(strcmp(uriExt,cssExt) == 0) {
+        const char* contentType = "text/css";
+        ESP_ERROR_CHECK(httpd_resp_set_type(req, contentType));
+    } else if(strcmp(uriExt,jsExt) == 0) {
+        const char* contentType = "text/javascript";
+        ESP_ERROR_CHECK(httpd_resp_set_type(req, contentType));
+    } else if(strcmp(uriExt,pngExt) == 0) {
+        const char* contentType = "image/png";
+        ESP_ERROR_CHECK(httpd_resp_set_type(req, contentType));
+    } else if(strcmp(uriExt,jsonExt) == 0) {
+        const char* contentType = "application/json";
+        ESP_ERROR_CHECK(httpd_resp_set_type(req, contentType));
+    } else if(strcmp(uriExt,webpExt) == 0) {
+        const char* contentType = "image/webp";
+        ESP_ERROR_CHECK(httpd_resp_set_type(req, contentType));
+    } else if(strcmp(uriExt,jpegExt) == 0) {
+        const char* contentType = "image/jpeg";
+        ESP_ERROR_CHECK(httpd_resp_set_type(req, contentType));
+    } else if(strcmp(uriExt,jpgExt) == 0) {
+        const char* contentType = "image/jpeg";
+        ESP_ERROR_CHECK(httpd_resp_set_type(req, contentType));
     }
-
-    FILE *fp = fopen(INDEX_HTML_PATH, "r");
-    if (fread(index_html, st.st_size, 1, fp) == 0)
-    {
-        ESP_LOGE(TAG, "fread failed");
-    }
-    fclose(fp);
+    
+    return req;
 }
- */
-esp_err_t send_web_page(httpd_req_t *req)
+
+
+static esp_err_t get_handler(httpd_req_t *req)
 {
-    
-    char* fileData = get_web_server_file(req->uri);
-    
     int response;
-
-    //sprintf(response_data, fileData, iot_wifi_conf.ssid, iot_wifi_conf.passwd);
-    //response = httpd_resp_send(req, response_data, HTTPD_RESP_USE_STRLEN);
-    //char responseData[IOT_HTTPD_RESPONSE_BUFFER];
-    //memset((void *)responseData, 0, sizeof(responseData));
-    //Only works when 'responseData[] is declared global scope. Otherwise panic.
-    //sprintf(responseData, fileData, iot_wifi_conf.ssid, iot_wifi_conf.passwd);
-    response = httpd_resp_send(req, fileData, HTTPD_RESP_USE_STRLEN);
-
-    return response;
+    char* fileData = get_web_server_file(req->uri);
+    if(fileData != NULL) {
+        if(strcmp(req->uri, (char*)"/system-settings.html") == 0) {
+            fileData = iot_system_settings_populate_html(fileData);
+        }
+        response = httpd_resp_send(set_content_type(req), fileData, HTTPD_RESP_USE_STRLEN);
+        free(fileData);
+    } else {
+        response = httpd_resp_send_404(req);
+    }
+    return response;    
+    //return send_req_file(req);
 }
 
+static esp_err_t iot_settings_post_handler(httpd_req_t *req) {
+    size_t queryLen = httpd_req_get_url_query_len(req) + sizeof(char);
+    //char* queryStr = malloc(queryLen);
+    char* queryStr = NULL;
+    if(queryLen > 1) {
+        queryStr = malloc(queryLen);
+        ESP_ERROR_CHECK(httpd_req_get_url_query_str(req, queryStr, queryLen));
+        
+    } else {
+        size_t recv_size = req->content_len;
+        queryStr = malloc(recv_size);
+        
+        int ret = httpd_req_recv(req, queryStr, recv_size);
+    }
 
-esp_err_t get_handler(httpd_req_t *req)
-{
-    return send_web_page(req);
+    char* queryStrDecode = urlDecode(queryStr);
+    ESP_LOGI(TAG, "Query string: %s\n", queryStrDecode);
+    free(queryStrDecode);
+    iot_iot_settings_process_config_update(queryStr);
+    
+
+
+    
+    esp_restart();
+    return ESP_OK;
 }
 
-
-esp_err_t post_handler(httpd_req_t *req)
+static esp_err_t post_handler(httpd_req_t *req)
 {
     /* Destination buffer for content of HTTP POST request.
      * httpd_req_recv() accepts char* only, but content could
@@ -139,7 +164,8 @@ esp_err_t post_handler(httpd_req_t *req)
     return ESP_OK;
 }
 
-void update_settings(char* postString)
+
+static void update_settings(char* postString)
 {
     bool reset = false;
     char* ssidKey = IOT_KEY_WIFI_SSID;
@@ -183,17 +209,18 @@ void update_settings(char* postString)
     }
 }
 
-httpd_uri_t uri_index_get = {
-    .uri = "/",
-    .method = HTTP_GET,
-    .handler = get_handler,
-    .user_ctx = NULL};
-
 httpd_uri_t uri_wild_get = {
     .uri = "/*",
     .method = HTTP_GET,
     .handler = get_handler,
     .user_ctx = NULL};
+
+httpd_uri_t uri_post_settings_iot = {
+    .uri = "/iot_settings.html",
+    .method = HTTP_POST,
+    .handler = iot_settings_post_handler,
+    .user_ctx = NULL};
+
 
 httpd_uri_t uri_post = {
     .uri = "/",
@@ -204,9 +231,9 @@ httpd_uri_t uri_post = {
 httpd_handle_t iot_start_httpd(void)
 {
     esp_vfs_spiffs_conf_t conf = {
-        .base_path = "/spiffs",
+        .base_path = "",
         .partition_label = NULL,
-        .max_files = 5,
+        .max_files = 100,
         .format_if_mount_failed = false};
 
     esp_vfs_spiffs_register(&conf);
@@ -214,15 +241,15 @@ httpd_handle_t iot_start_httpd(void)
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
     httpd_handle_t server = NULL;
     config.uri_match_fn = httpd_uri_match_wildcard;
-    //init_web_page_buffer();
 
     if (httpd_start(&server, &config) == ESP_OK)
     {
-        httpd_register_uri_handler(server, &uri_index_get);
+        httpd_register_uri_handler(server, &uri_post_settings_iot);
         httpd_register_uri_handler(server, &uri_wild_get);
         httpd_register_uri_handler(server, &uri_post);
         
     }
+    
 
     return server;
 }

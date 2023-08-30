@@ -3,6 +3,9 @@ sdkconfig
 sdkconfig.old
 cmake-*/
 **.bin
-.git/
+.git
 debug.log
 **/test.*
+.idea
+.vscode
+.*
