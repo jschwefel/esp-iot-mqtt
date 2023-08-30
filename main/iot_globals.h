@@ -15,7 +15,7 @@ extern const char *TAG;
 extern const char* baseTopic;
 
 //extern iot_config_linked_list_t* iotConfigHead;
-extern cJSON* iotConfiguration;
+//extern cJSON* iotConfiguration;
 extern nvs_handle_t iot_nvs_user_handle;
 extern QueueHandle_t simpleSwitchInreQueue;
 extern esp_mqtt_client_handle_t iotMqttClient;

@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IOT Settings</title>
+    <link rel="stylesheet" href="css/settings.css">
+    <script src="js/esp-iot-mqtt.js"></script>
+</head>
+<body>
+<div class="form-container">
+    <h1>IOT Configuration</h1>
+    <form>
+        <div class="form-group">
+            <h2>IOT Item %d Settings</h2>
+            <label for="iot-%d-type" class="form-label">Device Type</label>
+            <select id="iot-%d-type" onchange="updateHiddenInput('iot-%d-type')">
+                <option value="0" >Simple Switch</option>
+                <option value="-1" >Do Not Use</option>
+                <option value="255">Dummy Test</option>
+            </select>
+            <input type="hidden" id="hidden-iot-%d-type" name="hidden-iot-%d-type" value="">
+            <p>
+            <label for="iot-task-name-%d" class="form-label">Unique Identifier</label>
+            <input id="iot-task-name-%d" class="form-input" type="text" required value="">
+            <p>
+            <label for="iot-%d-intrPin" class="form-label">Device Type</label>
+            <select id="iot-%d-intrPin" onchange="updateHiddenInput('iot-%d-intrPin')">
+                <option value="-1," >GPIO_NUM_NC</option>
+                <option value="0," >GPIO_NUM_0</option>
+                <option value="1," >GPIO_NUM_1</option>
+                <option value="2," >GPIO_NUM_2</option>
+                <option value="3," >GPIO_NUM_3</option>
+                <option value="4," >GPIO_NUM_4</option>
+                <option value="5," >GPIO_NUM_5</option>
+                <option value="6," >GPIO_NUM_6</option>
+                <option value="7," >GPIO_NUM_7</option>
+                <option value="8," >GPIO_NUM_8</option>
+                <option value="9," >GPIO_NUM_9</option>
+                <option value="10," >GPIO_NUM_10</option>
+                <option value="11," >GPIO_NUM_11</option>
+                <option value="12," >GPIO_NUM_12</option>
+                <option value="13," >GPIO_NUM_13</option>
+                <option value="14," >GPIO_NUM_14</option>
+                <option value="15," >GPIO_NUM_15</option>
+                <option value="16," >GPIO_NUM_16</option>
+                <option value="17," >GPIO_NUM_17</option>
+                <option value="18," >GPIO_NUM_18</option>
+                <option value="19," >GPIO_NUM_19</option>
+                <option value="20," >GPIO_NUM_20</option>
+                <option value="21," >GPIO_NUM_21</option>
+                <option value="26," >GPIO_NUM_26</option>
+                <option value="27," >GPIO_NUM_27</option>
+                <option value="28," >GPIO_NUM_28</option>
+                <option value="29," >GPIO_NUM_29</option>
+                <option value="30," >GPIO_NUM_30</option>
+                <option value="31," >GPIO_NUM_31</option>
+                <option value="32," >GPIO_NUM_32</option>
+                <option value="33," >GPIO_NUM_33</option>
+                <option value="34," >GPIO_NUM_34</option>
+                <option value="35," >GPIO_NUM_35</option>
+                <option value="36," >GPIO_NUM_36</option>
+                <option value="37," >GPIO_NUM_37</option>
+                <option value="38," >GPIO_NUM_38</option>
+                <option value="39," >GPIO_NUM_39</option>
+                <option value="40," >GPIO_NUM_40</option>
+                <option value="41," >GPIO_NUM_41</option>
+                <option value="42," >GPIO_NUM_42</option>
+                <option value="43," >GPIO_NUM_43</option>
+                <option value="44," >GPIO_NUM_44</option>
+                <option value="45," >GPIO_NUM_45</option>
+                <option value="46," >GPIO_NUM_46</option>
+                <option value="47," >GPIO_NUM_47</option>
+            </select>
+            <input type="hidden" id="hidden-iot-%d-intrPin" name="hidden-iot-%d-intrPin" value="">
+            <p>
+            <label for="iot-%d-intrPull" class="form-label">Interrupt Pull Up/Down</label>
+            <select id="iot-%d-intrPull" onchange="updateHiddenInput('iot-%d-intrPull')">
+                <option value="0" >Pull Neither</option>
+                <option value="1" >Pull Up</option>
+                <option value="2" >Pull Down</option>
+                <option value="3" >Pull Both</option>
+            </select>
+            <input type="hidden" id="hidden-iot-%d-intrPull" name="hidden-iot-%d-intrPull" value="">
+            <p>
+            <label for="iot-%d-intrType" class="form-label">Interrupt Type</label>
+            <select id="iot-%d-intrType" onchange="updateHiddenInput('iot-%d-intrType')">
+                <option value="1" >Rising Edge</option>
+                <option value="2" >Falling Edge</option>
+                <option value="3" >Rising & Falling Edge</option>
+                <option value="4" >Input Low</option>
+                <option value="5" >Input High</option>
+            </select>
+            <input type="hidden" id="hidden-iot-%d-intrType" name="hidden-iot-%d-intrType" value="">
+            <p>
+            <label for="iot-%d-switchType" class="form-label">Switch Type</label>
+            <select id="iot-%d-switchType" onchange="updateHiddenInput('iot-%d-switchType')">
+                <option value="0" >Toggle (On/Off)</option>
+                <option value="1" >One Shot (Positive)</option>
+                <option value="2" >One Shot (Negative)</option>
+                <option value="3" >Timer (Positive)</option>
+                <option value="4" >Timer (Negative)</option>
+            </select>
+            <input type="hidden" id="hidden-iot-%d-switchType" name="hidden-iot-%d-switchType" value="">
+            <p>
+                <label for="iot-%d-mqtt-topic" class="form-label">MQTT Topic</label>
+                <input id="iot-%d-mqtt-topic" class="form-input" type="text" required value="">
+            <p>
+                <label for="iot-%d-mqtt-on" class="form-label">MQTT On Message</label>
+                <input id="iot-%d-mqtt-on" class="form-input" type="text" required value="">
+            <p>
+                <label for="iot-%d-mqtt-off" class="form-label">MQTT Off Message</label>
+                <input id="iot-%d-mqtt-off" class="form-input" type="text" required value="">
+            <p>
+            <label for="iot-%d-outPin" class="form-label">Output Pin</label>
+            <select id="iot-%d-outPin" onchange="updateHiddenInput('iot-%d-outPin')">
+                <option value="-1," >GPIO_NUM_NC</option>
+                <option value="0," >GPIO_NUM_0</option>
+                <option value="1," >GPIO_NUM_1</option>
+                <option value="2," >GPIO_NUM_2</option>
+                <option value="3," >GPIO_NUM_3</option>
+                <option value="4," >GPIO_NUM_4</option>
+                <option value="5," >GPIO_NUM_5</option>
+                <option value="6," >GPIO_NUM_6</option>
+                <option value="7," >GPIO_NUM_7</option>
+                <option value="8," >GPIO_NUM_8</option>
+                <option value="9," >GPIO_NUM_9</option>
+                <option value="10," >GPIO_NUM_10</option>
+                <option value="11," >GPIO_NUM_11</option>
+                <option value="12," >GPIO_NUM_12</option>
+                <option value="13," >GPIO_NUM_13</option>
+                <option value="14," >GPIO_NUM_14</option>
+                <option value="15," >GPIO_NUM_15</option>
+                <option value="16," >GPIO_NUM_16</option>
+                <option value="17," >GPIO_NUM_17</option>
+                <option value="18," >GPIO_NUM_18</option>
+                <option value="19," >GPIO_NUM_19</option>
+                <option value="20," >GPIO_NUM_20</option>
+                <option value="21," >GPIO_NUM_21</option>
+                <option value="26," >GPIO_NUM_26</option>
+                <option value="27," >GPIO_NUM_27</option>
+                <option value="28," >GPIO_NUM_28</option>
+                <option value="29," >GPIO_NUM_29</option>
+                <option value="30," >GPIO_NUM_30</option>
+                <option value="31," >GPIO_NUM_31</option>
+                <option value="32," >GPIO_NUM_32</option>
+                <option value="33," >GPIO_NUM_33</option>
+                <option value="34," >GPIO_NUM_34</option>
+                <option value="35," >GPIO_NUM_35</option>
+                <option value="36," >GPIO_NUM_36</option>
+                <option value="37," >GPIO_NUM_37</option>
+                <option value="38," >GPIO_NUM_38</option>
+                <option value="39," >GPIO_NUM_39</option>
+                <option value="40," >GPIO_NUM_40</option>
+                <option value="41," >GPIO_NUM_41</option>
+                <option value="42," >GPIO_NUM_42</option>
+                <option value="43," >GPIO_NUM_43</option>
+                <option value="44," >GPIO_NUM_44</option>
+                <option value="45," >GPIO_NUM_45</option>
+                <option value="46," >GPIO_NUM_46</option>
+                <option value="47," >GPIO_NUM_47</option>
+            </select>
+            <input type="hidden" id="hidden-iot-%d-outPin" name="hidden-iot-%d-outPull" value="">
+            <p>
+                <label for="iot-%d-outPull" class="form-label">Output Pull Up/Down</label>
+                <select id="iot-%d-outPull" onchange="updateHiddenInput('iot-%d-outPull')">
+                    <option value="0" >Pull Neither</option>
+                    <option value="1" >Pull Up</option>
+                    <option value="2" >Pull Down</option>
+                    <option value="3" >Pull Both</option>
+                </select>
+                <input type="hidden" id="hidden-iot-%d-outPull" name="hidden-iot-%d-outPull" value="">
+            <p>
+        </div>
+        <button class="form-submit" type="submit">Submit</button>
+    </form>
+</div>
+</body>
+</html>

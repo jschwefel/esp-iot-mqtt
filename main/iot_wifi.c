@@ -23,11 +23,11 @@ static EventGroupHandle_t s_wifi_event_group;
 static int s_retry_num = 0;
 
 
-static wifi_connection_t get_wifi_settings_from_nvs();
+static iot_wifi_conf_t get_wifi_settings_from_nvs();
 static void wifi_event_handler_ap(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data);
 static void wifi_event_handler_sta(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data);
-static void wifi_init_softap(wifi_connection_t settings);
-static void wifi_init_sta(wifi_connection_t settings);
+static void wifi_init_softap(iot_wifi_conf_t settings);
+static void wifi_init_sta(iot_wifi_conf_t settings);
 
 
 
@@ -73,8 +73,8 @@ bool iot_start_wifi()
     iot_nvs_set_int_value("wifi-mode", 2);
     // End testing code
 
-    iot_wifi_conf.wifi_settings = get_wifi_settings_from_nvs();
-    switch (iot_wifi_conf.wifi_settings.mode) 
+    iot_wifi_conf = get_wifi_settings_from_nvs();
+    switch (iot_wifi_conf.mode) 
     {
         case -1:
             ESP_ERROR_CHECK(-1);
@@ -87,24 +87,24 @@ bool iot_start_wifi()
 
             char* defaultWiFiCreds = strcat(wifiBase, macLastSix);
 
-            iot_wifi_conf.wifi_settings.ssid = defaultWiFiCreds;
-            iot_wifi_conf.wifi_settings.passwd = defaultWiFiCreds;
-            wifi_init_softap(iot_wifi_conf.wifi_settings);
+            iot_wifi_conf.ssid = defaultWiFiCreds;
+            iot_wifi_conf.passwd = defaultWiFiCreds;
+            wifi_init_softap(iot_wifi_conf);
             free(macLastSix);
         break;
         
         //Start up in infra mode and connect to existing wireless network.
         case IOT_WIFI_MODE_STA:
-            wifi_init_sta(iot_wifi_conf.wifi_settings);
+            wifi_init_sta(iot_wifi_conf);
         break;
     }
 
     return true;
 }
 
-wifi_connection_t get_wifi_settings_from_nvs()
+iot_wifi_conf_t get_wifi_settings_from_nvs()
 {
-    wifi_connection_t settings;
+    iot_wifi_conf_t settings;
     settings.mode = iot_nvs_get_int_value(IOT_KEY_WIFI_MODE);
     settings.ssid = iot_nvs_get_str_value(IOT_KEY_WIFI_SSID);
     settings.passwd = iot_nvs_get_str_value(IOT_KEY_WIFI_PASS); 
@@ -113,7 +113,7 @@ wifi_connection_t get_wifi_settings_from_nvs()
 }
 
 
-static void wifi_init_softap(wifi_connection_t settings)
+static void wifi_init_softap(iot_wifi_conf_t settings)
     {
     ESP_LOGI(TAG, "WiFi Start");
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
@@ -160,7 +160,7 @@ static void wifi_init_softap(wifi_connection_t settings)
   
 }
 
-static void wifi_init_sta(wifi_connection_t settings)
+static void wifi_init_sta(iot_wifi_conf_t settings)
 {
     s_wifi_event_group = xEventGroupCreate();
 
@@ -190,7 +190,7 @@ static void wifi_init_sta(wifi_connection_t settings)
             .threshold.authmode = WIFI_AUTH_OPEN,
             .sae_pwe_h2e = WPA3_SAE_PWE_BOTH,
             .sae_h2e_identifier = "*",
-        
+         
         },
     }; 
     strncpy((char*)wifi_config.sta.ssid, (char*)settings.ssid, 32);

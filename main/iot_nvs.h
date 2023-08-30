@@ -2,6 +2,8 @@
 #undef INTERFACE
 #pragma once
 
+#include "nvs_flash.h"
+
 
 int32_t iot_nvs_get_int_value(const char *key);
 bool iot_nvs_set_int_value(const char *key,int32_t value);
