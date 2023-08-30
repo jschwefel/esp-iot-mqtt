@@ -6,3 +6,4 @@ cmake-*/
 .git/
 debug.log
 **/test.*
+.*
