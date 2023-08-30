@@ -16,6 +16,7 @@
     "idf.flashType": "JTAG",
     "C_Cpp.default.compilerPath": "/home/jschwefel/.espressif/tools/riscv32-esp-elf/esp-12.2.0_20230208/riscv32-esp-elf/bin/riscv32-esp-elf-gcc",
     "files.associations": {
+        "*.bin": "code-text-binary",
         "queue.h": "c",
         "freertos.h": "c",
         "freertosconfig.h": "c",
@@ -26,7 +27,8 @@
         "iot_enums.h": "c",
         "hal.h": "c",
         "system.h": "c",
-        "*.old": "c"
+        "*.old": "c",
+        "urldecode.h": "c"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }

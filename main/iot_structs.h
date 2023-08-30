@@ -8,17 +8,17 @@
 // GPIO Simple Swith Interrupt
 typedef struct {
     char* intrTaskName;
-    char* mqttSubTopic;
-    char* mqttDataOn;
-    char* mqttDataOff;
     gpio_num_t intrPin;
+    bool inputInvert;
     iot_gpio_pull_t intrPull;
     gpio_int_type_t intrType; 
     iot_simple_switch_type_t intrSimpleSwitchType;
+    char* mqttSubTopic;
+    char* mqttDataOn;
+    char* mqttDataOff;
     gpio_num_t outPin;
     iot_gpio_pull_t outPull;
     uint32_t timerDelay;
-    bool outInvert;
 } iot_intr_switch_simple_config_t;
 
 typedef struct {
@@ -44,11 +44,9 @@ typedef struct {
     int32_t mode;
     char* ssid;
     char* passwd;
-} wifi_connection_t;
-
-typedef struct {
-    wifi_connection_t wifi_settings;
 } iot_wifi_conf_t;
+
+
 
 
 
@@ -66,6 +64,6 @@ typedef struct {
     gpio_num_t outPin;
     iot_gpio_pull_t outPull;
     uint32_t timerDelay;
-    bool outInvert;
+    bool inputInvert;
 } dummy_config_t;
 

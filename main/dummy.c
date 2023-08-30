@@ -15,29 +15,29 @@ iot_config_linked_list_t* dummy_intiConfig(void) {
         jasonTest->intrPin = GPIO_NUM_0;
         jasonTest->intrSimpleSwitchType = IOT_INTR_SWITCH_TOGGLE;
         jasonTest->outPin = GPIO_NUM_1;
-        jasonTest->outInvert = true;
+        jasonTest->outPull = IOT_GPIO_PULL_UP;
+        jasonTest->intrPull = IOT_GPIO_PULL_UP;
+        //jasonTest->intrType = GPIO_INTR_ANYEDGE;
+        jasonTest->inputInvert = true;
         jasonTest->timerDelay = 5000;
         jasonTest->mqttSubTopic = "/JSONTest";
+        jasonTest->mqttDataOn = "On";
+        jasonTest->mqttDataOff = "Off";
 
     iot_config_item_t* configItemTest0 = calloc(1, sizeof(iot_config_item_t));
         configItemTest0->configItem = jasonTest;
         configItemTest0->configKey = "JSON_Test-1";
         configItemTest0->configItemType = IOT_CONFIG_SIMPLE_SWITCH;
 
-    iot_config_item_t* configItemTest1 = calloc(1, sizeof(iot_config_item_t));
-        configItemTest1->configItem = jasonTest;
-        configItemTest1->configKey = "Config_Test-1";
-        configItemTest1->configItemType = IOT_CONFIG_DUMMY_TEST;
-
 
     iot_intr_switch_simple_config_t* lindaTest = calloc(1, sizeof(iot_intr_switch_simple_config_t));
-        lindaTest->intrTaskName = "Task Inter 2";
+        lindaTest->intrTaskName = "Task Inter 3";
         lindaTest->intrPin = GPIO_NUM_2;
         lindaTest->intrSimpleSwitchType = IOT_INTR_SWITCH_ONE_SHOT_POS;
         lindaTest->intrPull = IOT_GPIO_PULL_DOWN;
-        lindaTest->intrType = GPIO_INTR_POSEDGE;
+        lindaTest->intrType = GPIO_INTR_NEGEDGE;
         lindaTest->outPin = GPIO_NUM_3;
-        lindaTest->outInvert = false;
+        lindaTest->inputInvert = false;
         lindaTest->outPull = IOT_GPIO_PULL_DOWN;
         lindaTest->timerDelay = 500;
         lindaTest->mqttSubTopic = "/NopeNope";
@@ -54,23 +54,19 @@ iot_config_linked_list_t* dummy_intiConfig(void) {
     
 
 
-    iot_config_item_t* configItemTest4 = calloc(1, sizeof(iot_config_item_t));
-        configItemTest4->configItem = lindaTest;
-        configItemTest4->configKey = "Config_Test-2";
-        configItemTest4->configItemType = IOT_CONFIG_DUMMY_TEST;
-    
+   
 
-
-    iot_config_linked_list_t* c4 = calloc(1, sizeof(iot_config_linked_list_t));
-    c4->configEntry = configItemTest4;
+/**/
+//    iot_config_linked_list_t* c4 = calloc(1, sizeof(iot_config_linked_list_t));
+//    c4->configEntry = configItemTest4;
     iot_config_linked_list_t* c3 = calloc(1, sizeof(iot_config_linked_list_t));
-    c3->next = c4;
+//    c3->next = c4;
     c3->configEntry = configItemTest3;
-    iot_config_linked_list_t* c1 = calloc(1, sizeof(iot_config_linked_list_t));
-    c1->next = c3;
-    c1->configEntry = configItemTest1;
+//    iot_config_linked_list_t* c1 = calloc(1, sizeof(iot_config_linked_list_t));
+//    c1->next = c3;
+//    c1->configEntry = configItemTest1;
     iot_config_linked_list_t* iotConfigHead = calloc(1, sizeof(iot_config_linked_list_t));
-    iotConfigHead->next = c1;
+    iotConfigHead->next = c3;
     iotConfigHead->configEntry = configItemTest0;
 
     return iotConfigHead;

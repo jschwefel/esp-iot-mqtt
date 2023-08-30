@@ -1,21 +1,21 @@
 #pragma once
 
 
-typedef enum 
-{
+typedef enum {
     GPIO_OUT_LEVEL_LOW =        0,
     GPIO_OUT_LEVEL_HIGH =       1,
 } gpio_out_level_t;
 
-typedef enum
-{
-    IOT_GPIO_PULL_UP =          0,
-    IOT_GPIO_PULL_DOWN =        1,
-    IOT_GPIO_PULL_BOTH =        2,
+typedef enum {
+    IOT_GPIO_PULL_NEITHER =     0,
+    IOT_GPIO_PULL_UP =          1,
+    IOT_GPIO_PULL_DOWN =        2,
+    IOT_GPIO_PULL_BOTH =        3,
 } iot_gpio_pull_t;
 
-typedef enum
-{
+// Need to refactor this as the pos/neg is alread
+// determined by the interrupt type.
+typedef enum {
     IOT_INTR_SWITCH_TOGGLE =         0,
     IOT_INTR_SWITCH_ONE_SHOT_POS =   1,
     IOT_INTR_SWITCH_ONE_SHOT_NEG =   2,

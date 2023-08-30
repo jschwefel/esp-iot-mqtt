@@ -17,7 +17,7 @@ void iot_intr_gpio_set_config(char* intrName,
                                 int timeDeley,
                                 gpio_num_t outPin,
                                 iot_gpio_pull_t outPull,
-                                bool outInvert, 
+                                bool inputInvert, 
                                 char* mqttSubTopic,
                                 char* mqttOn,
                                 char* mqttOff
