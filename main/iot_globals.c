@@ -1,4 +1,5 @@
 #include "cJSON.h"
+#include "esp_log.h"
 #include "iot_structs.h"
 #include "nvs_flash.h"
 #include "iot_nvs.h"
@@ -23,5 +24,6 @@ void iot_init(void) {
     ESP_ERROR_CHECK(gpio_install_isr_service(ESP_INTR_FLAG_LEVEL3));
     iot_nvs_user_handle = iot_init_flash(iot_nvs_user_handle, "configuration");
     simpleSwitchInreQueue = xQueueCreate(10, sizeof(iot_intr_switch_simple_config_t));
+    esp_log_level_set(TAG, ESP_LOG_DEBUG);
 
 }
