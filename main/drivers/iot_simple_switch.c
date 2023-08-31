@@ -1,16 +1,3 @@
-#include "../URLDecode/urldecode.h"
-#include "cJSON.h"
-#include "iot_httpd.h"
-#include "iot_utils.h"
-#include "iot_defines.h"
-#include "iot_nvs.h"
-#include "iot_structs.h"
-#include "iot_enums.h"
-#include "iot_globals.h"
-#include "../iot_globals.h"
-#include "../iot_enums.h"
-#include "../iot_mqtt.h"
-#include "../iot_utils.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -18,16 +5,23 @@
 #include "freertos/queue.h"
 #include "freertos/task.h"
 #include "freertos/timers.h"
-#include "iot_simple_switch.h"
 #include "freertos/portmacro.h"
 #include "esp_log.h"
+#include "esp_http_server.h"
 #include "driver/gpio.h"
 #include "driver/gpio_filter.h"
+#include "cJSON.h"
+#include "iot_simple_switch.h"
+#include "../iot_globals.h"
+#include "../iot_enums.h"
+#include "../iot_mqtt.h"
+#include "../iot_utils.h"
 #include "../iot_config.h"
 #include "../iot_enums.h"
 #include "../iot_config.h"
-#include "iot_simple_switch.h"
-
+#include "../iot_nvs.h"
+#include "../iot_defines.h"
+#include "../URLDecode/urldecode.h"
 
 
 TimerHandle_t timerHandle;
@@ -38,7 +32,7 @@ static void iot_intr_switch_toggle(iot_intr_switch_simple_config_t *intrParams);
 static void iot_intr_switch_one_shot_and_timer(iot_intr_switch_simple_config_t *intrParams);
 static void gpio_timer_intr_callback(TimerHandle_t timer);
 static esp_err_t iot_intr_simple_switch_setup(iot_intr_switch_simple_config_t* intrConfig);
-
+static iot_mqtt_message_t* set_mqtt_message(char* subTopic, char* payload);
 
 void iot_conf_controller(iot_config_linked_list_t* configList) {
     while(true) {
@@ -100,13 +94,6 @@ static esp_err_t iot_intr_simple_switch_setup(iot_intr_switch_simple_config_t* i
     bool outPullUp = ((intrConfig->outPull == IOT_GPIO_PULL_UP) || (intrConfig->intrPull == IOT_GPIO_PULL_BOTH)) ? true : false;
     bool outPullDown = ((intrConfig->outPull == IOT_GPIO_PULL_DOWN) || (intrConfig->intrPull == IOT_GPIO_PULL_BOTH)) ? true : false;
 
-/* 
-    bool intrPullUp = ((intrConfig->intrPull == 0) || (intrConfig->intrPull == 2)) ? true : false;
-    bool intrPullDown = ((intrConfig->intrPull == 1) || (intrConfig->intrPull == 2)) ? true : false;
-    bool outPullUp = ((intrConfig->outPull == 0) || (intrConfig->intrPull == 2)) ? true : false;
-    bool outPullDown = ((intrConfig->outPull == 1) || (intrConfig->intrPull == 2)) ? true : false;
-
- */
     gpio_int_type_t intr = GPIO_INTR_DISABLE;
     switch(intrConfig->intrSimpleSwitchType) {
         case IOT_INTR_SWITCH_TOGGLE :
@@ -154,13 +141,25 @@ static esp_err_t iot_intr_simple_switch_setup(iot_intr_switch_simple_config_t* i
     ESP_ERROR_CHECK(gpio_new_pin_glitch_filter(glitchFilterConfig, glitchFilter));
     ESP_ERROR_CHECK(gpio_glitch_filter_enable(*glitchFilter));
 
-    ESP_LOGI(TAG, "This is it");
     gpio_isr_handler_add((uint32_t)intrConfig->intrPin, iot_gpio_isr_intr_handler, intrConfig);
     xTaskCreate(iot_gpio_isr_task_queue_handler, intrConfig->intrTaskName, 2048, intrConfig, 1, NULL);
     
     return ESP_OK;
 }
 
+static iot_mqtt_message_t* set_mqtt_message(char* subTopic, char* payload) {
+    iot_mqtt_message_t* mqttMessage = malloc(sizeof(iot_mqtt_message_t));
+    
+    mqttMessage->topic = subTopic;
+    mqttMessage->qos = 1;
+    mqttMessage->retain = true;
+    if(payload != NULL) {
+        mqttMessage->data = payload;
+    }
+
+    return mqttMessage;
+
+}
 
 static void iot_intr_switch_toggle(iot_intr_switch_simple_config_t *intrParams)
 {
@@ -175,21 +174,24 @@ static void iot_intr_switch_toggle(iot_intr_switch_simple_config_t *intrParams)
     // Check to see if the input in inverted. Inverted input are
     // used when the sensor uses an "Acrive Low" output.
     uint32_t intrPinNorm = gpio_normailized_state(intrParams->inputInvert, intrParams->intrPin);
+/* 
     iot_mqtt_message_t mqttMessage = {
         .topic = intrParams->mqttSubTopic,
-        .qos = 0,
+        .qos = 1,
         .retain = true,
     };
+ */
 
+    iot_mqtt_message_t* mqttMessage = set_mqtt_message(intrParams->mqttSubTopic, NULL);
 
     if(intrPinNorm != 0) {
-        mqttMessage.data = intrParams->mqttDataOn;
-        iot_send_mqtt(&mqttMessage);
+        mqttMessage->data = intrParams->mqttDataOn;
+        iot_send_mqtt(mqttMessage);
     } else {
-        mqttMessage.data = intrParams->mqttDataOff;
-        iot_send_mqtt(&mqttMessage);
+        mqttMessage->data = intrParams->mqttDataOff;
+        iot_send_mqtt(mqttMessage);
     }
-    //gpio_set_level(1,1);
+    free(mqttMessage);
 
     if(indicator) { 
         gpio_set_level(intrParams->outPin, intrPinNorm); 
@@ -207,14 +209,9 @@ static void iot_intr_switch_one_shot_and_timer(iot_intr_switch_simple_config_t *
 
     // Check to see if the input in inverted. Inverted input are
     // used when the sensor uses an "Acrive Low" output.
-    iot_mqtt_message_t mqttMessage = {
-        .topic = intrParams->mqttSubTopic,
-        .qos = 0,
-        .retain = true,
-        .data = intrParams->mqttDataOn,
-    };
-
-    iot_send_mqtt(&mqttMessage);
+    iot_mqtt_message_t* mqttMessage = set_mqtt_message(intrParams->mqttSubTopic, intrParams->mqttDataOn);
+    iot_send_mqtt(mqttMessage);
+    free(mqttMessage);
 
     if(indicator) { 
         gpio_set_level(intrParams->outPin, true);
@@ -233,45 +230,18 @@ static void gpio_timer_intr_callback(TimerHandle_t timer)
     }
     
     if((intrParams->intrSimpleSwitchType == IOT_INTR_SWITCH_TIMER_POS) || (intrParams->intrSimpleSwitchType == IOT_INTR_SWITCH_TIMER_NEG)) {
-        iot_mqtt_message_t mqttMessage = {
-            .topic = intrParams->mqttSubTopic,
-            .qos = 0,
-            .retain = true,
-            .data = intrParams->mqttDataOff,
-        };  
-        iot_send_mqtt(&mqttMessage);
+        iot_mqtt_message_t* mqttMessage = set_mqtt_message(intrParams->mqttSubTopic, intrParams->mqttDataOff);
+        iot_send_mqtt(mqttMessage);
+        free(mqttMessage);
     }
 }
 
-/* 
-void iot_intr_gpio_set_config(char* intrName, gpio_num_t intrPin, iot_gpio_pull_t intrPull,
-    gpio_int_type_t intrType, iot_simple_switch_type_t intrSimpleSwitchType, int timeDelay,
-    gpio_num_t outPin, iot_gpio_pull_t outPull, bool inputInvert, char* mqttSubTopic,
-    char* mqttOn, char* mqttOff)
-{
-    iot_intr_switch_simple_config_t* intrGpioConfig = malloc(sizeof(iot_intr_switch_simple_config_t));
-        intrGpioConfig->intrTaskName = intrName;
-        intrGpioConfig->intrPin = intrPin;
-        intrGpioConfig->intrPull = intrPull;
-        intrGpioConfig->intrType = intrType;
-        intrGpioConfig->intrSimpleSwitchType = intrSimpleSwitchType;
-        intrGpioConfig->timerDelay = timeDelay;
-        intrGpioConfig->outPin = outPin;
-        intrGpioConfig->outPull = outPull;
-        intrGpioConfig->inputInvert = inputInvert;
-        intrGpioConfig->mqttSubTopic = mqttSubTopic;
-        intrGpioConfig->mqttDataOn = mqttOn;
-        intrGpioConfig->mqttDataOff = mqttOff;
-}
- */
 // I am sure this can be optimized like deserializeConfig
 iot_config_linked_list_t* iot_open_config(void) {
     char* configBlob = iot_nvs_get_blobstr_value(IOT_CONFIG_KEY);
     cJSON* configJson = cJSON_Parse(configBlob);
     cJSON* node = configJson->child;
-    //iot_config_linked_list_t* iotConfigHead  = calloc(1, sizeof(iot_config_linked_list_t));
     iot_config_linked_list_t* configHead = calloc(1, sizeof(iot_config_linked_list_t));
-    //iot_config_linked_list_t* config = calloc(1, sizeof(iot_config_linked_list_t));
     iot_config_linked_list_t* config = NULL;
     iot_config_linked_list_t** configPtrPtr = &configHead;
     iot_config_linked_list_t* tempConfig = NULL;
@@ -438,13 +408,6 @@ iot_config_linked_list_t* iot_iot_settings_process_config_update_simple_switch(i
         configItem->configItem = config;
 
     }
-/* 
-    iot_config_item_t* configItem = malloc(sizeof(iot_config_item_t));
-    configItem->configItemType = IOT_CONFIG_SIMPLE_SWITCH;
-    configItem->configKey = config->intrTaskName;
-    configItem->configItem = config;
- */
-//    iot_config_linked_list_t* configList = malloc(sizeof(iot_config_linked_list_t));
     iot_config_linked_list_t* configList = calloc(1, sizeof(iot_config_linked_list_t*));
     configList->configEntry = configItem;
     configList->next = NULL;
