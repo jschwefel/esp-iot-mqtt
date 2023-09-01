@@ -12,10 +12,12 @@
 idf_component_register(SRC_DIRS "." 
                                 "drivers"
                                 "../URLDecode/"
-                         
+                                "../Hash-Table/"
                     INCLUDE_DIRS "."
+                                "drivers"
                                 "../URLDecode/"
-                                "drivers")
+                                "../Hash-Table/"
+)
 
 target_compile_options(${COMPONENT_LIB} PRIVATE -Wno-error=char-subscripts -Wno-error=unknown-pragmas)                                
 

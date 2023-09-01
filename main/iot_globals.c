@@ -3,10 +3,13 @@
 #include "iot_structs.h"
 #include "nvs_flash.h"
 #include "iot_nvs.h"
+#include "iot_defines.h"
 #include "mqtt_client.h"
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
+
+#include "../Hash-Table/hashtable.h"
 
 const char* TAG = "ESP-IOT-MQTT";
 
@@ -18,6 +21,7 @@ nvs_handle_t iot_nvs_user_handle;
 QueueHandle_t simpleSwitchInreQueue;
 esp_mqtt_client_handle_t iotMqttClient;
 iot_wifi_conf_t iot_wifi_conf;
+hash_table_t* mqttSubscribeMap;
 
 void iot_init(void) {
     //iotConfiguration = cJSON_CreateObject();
@@ -25,5 +29,7 @@ void iot_init(void) {
     iot_nvs_user_handle = iot_init_flash(iot_nvs_user_handle, "configuration");
     simpleSwitchInreQueue = xQueueCreate(10, sizeof(iot_intr_switch_simple_config_t));
     esp_log_level_set(TAG, ESP_LOG_DEBUG);
+    //mqttSubscribeMap = hash_table_new(MODE_VALUEREF);
+    mqttSubscribeMap = hash_table_new(MODE_COPY);
 
 }

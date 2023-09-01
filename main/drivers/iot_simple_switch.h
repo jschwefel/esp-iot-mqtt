@@ -16,3 +16,4 @@ cJSON* serialize_iot_intr_switch_simple_config(void* configItemPtr);
 iot_config_linked_list_t* deserialize_iot_intr_switch_simple_config(char* key, cJSON* configJson);
 iot_config_linked_list_t* deserialize_dummy(char* key, cJSON* configJson);
 iot_config_linked_list_t* iot_iot_settings_process_config_update_simple_switch(int sequence, char* queryString);
+void simple_switch_mqtt_subscribe_handler(void* data);

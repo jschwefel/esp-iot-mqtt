@@ -47,6 +47,11 @@ typedef struct {
 } iot_wifi_conf_t;
 
 
+typedef struct {
+    void* callbackData;
+    void* callbackFunc;
+} iot_mqtt_subscribe_callback_t;
+
 
 
 

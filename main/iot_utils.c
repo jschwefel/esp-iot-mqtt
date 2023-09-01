@@ -145,3 +145,11 @@ void spiffs_dir(char* directory) {
     } 
 }
 
+/* 
+void iot_mqtt_callback_prototype(void* data) {
+    iot_intr_switch_simple_config_t* callbackData = (iot_intr_switch_simple_config_t*)data;
+    //vTaskDelay(1000);
+    printf("\n\n\n+++++++++++++++++++++%s+++++++++++++++++++++++++++\n\n\n", callbackData->intrTaskName);
+}
+
+ */

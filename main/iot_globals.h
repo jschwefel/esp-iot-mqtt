@@ -9,7 +9,8 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
 
-#define IOT_ISR_ONE_SHOT_OUT_PIN_DEFAULT_DELAY 250
+#include "../Hash-Table/hashtable.h"
+
 
 extern const char *TAG;
 extern const char* baseTopic;
@@ -20,6 +21,6 @@ extern nvs_handle_t iot_nvs_user_handle;
 extern QueueHandle_t simpleSwitchInreQueue;
 extern esp_mqtt_client_handle_t iotMqttClient;
 extern iot_wifi_conf_t iot_wifi_conf;
-
+extern hash_table_t* mqttSubscribeMap;
 
 void iot_init(void);

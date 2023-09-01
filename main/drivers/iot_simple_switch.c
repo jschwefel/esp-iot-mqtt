@@ -36,15 +36,25 @@ static iot_mqtt_message_t* set_mqtt_message(char* subTopic, char* payload);
 
 void iot_conf_controller(iot_config_linked_list_t* configList) {
     while(true) {
+        iot_mqtt_subscribe_callback_t* mqttCallback = malloc(sizeof(iot_mqtt_subscribe_callback_t));
         iot_config_item_t* configItem = configList->configEntry;
         switch(configItem->configItemType) {
             case IOT_CONFIG_SIMPLE_SWITCH :
-                iot_intr_simple_switch_setup((iot_intr_switch_simple_config_t*)(configItem->configItem));   
+                iot_intr_switch_simple_config_t* configEntry = (iot_intr_switch_simple_config_t*)(configItem->configItem);
+                iot_intr_simple_switch_setup(configEntry);
+                mqttCallback->callbackData = configEntry;
+                mqttCallback->callbackFunc = &simple_switch_mqtt_subscribe_handler;
+                char* subscribeTopic = concat(baseTopic, concat(configEntry->mqttSubTopic, "-Sub"));
+                ESP_LOGI(TAG,"Subscribing to MQTT Topic: %s", subscribeTopic);
+                iot_mqtt_callback_add(subscribeTopic, mqttCallback);
+                esp_mqtt_client_subscribe(iotMqttClient,subscribeTopic,0);
+                esp_mqtt_client_subscribe(iotMqttClient,subscribeTopic,1);
                 break;
 
             case IOT_CONFIG_DUMMY_TEST :
                 break;
-                iot_intr_simple_switch_setup((iot_intr_switch_simple_config_t*)(configItem->configItem));   
+                //iot_intr_switch_simple_config_t* configEntry = (iot_intr_switch_simple_config_t*)(configItem->configItem);
+                //iot_intr_simple_switch_setup(configEntry); 
                 break;
         }
         if(configList->next == NULL) {
@@ -125,7 +135,8 @@ static esp_err_t iot_intr_simple_switch_setup(iot_intr_switch_simple_config_t* i
     if (intrConfig->outPin != GPIO_NUM_NC) {
         gpio_config_t outPinConfig = {
             .pin_bit_mask = BIT64(intrConfig->outPin),
-            .mode = GPIO_MODE_OUTPUT,
+//            .mode = GPIO_MODE_OUTPUT,
+            .mode = GPIO_MODE_INPUT_OUTPUT,
             .pull_down_en = outPullDown,
             .pull_up_en = outPullUp,
             .intr_type = GPIO_MODE_DEF_DISABLE,
@@ -416,4 +427,20 @@ iot_config_linked_list_t* iot_iot_settings_process_config_update_simple_switch(i
 
     return configList;
 
+}
+
+void simple_switch_mqtt_subscribe_handler(void* data) {
+    iot_intr_switch_simple_config_t* callbackData = (iot_intr_switch_simple_config_t*)data;
+    int output = gpio_get_level(callbackData->outPin);
+    printf("Outpin: %d\tState: %d\n", callbackData->outPin, output);
+    if(output) {
+        iot_mqtt_message_t* mqttMessage = set_mqtt_message(callbackData->mqttSubTopic, callbackData->mqttDataOn);
+        iot_send_mqtt(mqttMessage);
+        free(mqttMessage);
+    } else {
+        iot_mqtt_message_t* mqttMessage = set_mqtt_message(callbackData->mqttSubTopic, callbackData->mqttDataOff);
+        iot_send_mqtt(mqttMessage);
+        free(mqttMessage);
+
+    }
 }
