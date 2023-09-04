@@ -112,7 +112,7 @@ static esp_err_t iot_settings_post_handler(httpd_req_t *req) {
         size_t recv_size = req->content_len;
         queryStr = malloc(recv_size);
         
-        int ret = httpd_req_recv(req, queryStr, recv_size);
+        httpd_req_recv(req, queryStr, recv_size);
     }
 
     char* queryStrDecode = urlDecode(queryStr);

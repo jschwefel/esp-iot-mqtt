@@ -18,6 +18,8 @@ static void log_error_if_nonzero(const char *message, int error_code);
 static void mqtt_app_start(void);
 static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data);
 
+static void run_mqtt_callback(const esp_mqtt_event_t *event);
+
 static void log_error_if_nonzero(const char *message, int error_code)
 {
     if (error_code != 0) {
@@ -79,11 +81,8 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
         ESP_LOGI(TAG, "MQTT_EVENT_DATA");
         printf("TOPIC=%.*s\r\n", event->topic_len, event->topic);
         printf("DATA=%.*s\r\n", event->data_len, event->data);
-        char* subscribeTopic = concat(baseTopic, event->topic);
-        iot_mqtt_subscribe_callback_t* callback = iot_mqtt_subscribe_get(subscribeTopic);
-        void (*mqttCallback)(void*) = callback->callbackFunc;
-        mqttCallback(callback->callbackData);
-        break;
+            run_mqtt_callback(event);
+            break;
     case MQTT_EVENT_ERROR:
         ESP_LOGI(TAG, "MQTT_EVENT_ERROR");
         if (event->error_handle->error_type == MQTT_ERROR_TYPE_TCP_TRANSPORT) {
@@ -101,10 +100,17 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
 
 }
 
-void iot_send_mqtt(iot_mqtt_message_t* mqttMessage)
-{
+static void run_mqtt_callback(const esp_mqtt_event_t* event) {
+    char* subscribeTopic = concat(baseTopic, event->topic);
+    iot_mqtt_subscribe_callback_t* callback = iot_mqtt_subscribe_get(subscribeTopic);
+    void (*mqttCallback)(void*) = callback->callbackFunc;
+    mqttCallback(callback->callbackData);
+}
+
+void iot_send_mqtt(iot_mqtt_message_t* mqttMessage) {
+    
     esp_mqtt_client_publish(iotMqttClient, concat(baseTopic, mqttMessage->topic), mqttMessage->data, 0, mqttMessage->qos, mqttMessage->retain);
-    ESP_LOGD(TAG, "MQTT Topic: %s\tMQTT Message: %s\n", concat(baseTopic, mqttMessage->topic), mqttMessage->data);
+    //ESP_LOGD(TAG, "MQTT Topic: %s\tMQTT Message: %s\n", concat(baseTopic, mqttMessage->topic), mqttMessage->data);
 }
 
 

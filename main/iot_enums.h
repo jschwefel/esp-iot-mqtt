@@ -29,3 +29,12 @@ typedef enum {
 
     IOT_CONFIG_DUMMY_TEST =     255,
 } iot_config_item_type_t;
+
+
+typedef enum {
+    IOT_MQTT_QOS_NO_TOPIC =         0,
+    IOT_MQTT_QOS_MOST_ONCE =        1,
+    IOT_MQTT_QOS_LEAST_ONCE =       2,
+    IOT_MQTT_QOS_ONLY_ONCE =        3,
+    
+} iot_mqtt_qos_t;

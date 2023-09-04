@@ -117,15 +117,37 @@
             </select>
             <input type="hidden" id="iot-00-intrSimpleSwitchType" name="iot-00-intrSimpleSwitchType" value="">
             <p>
-                <label for="iot-00-mqttSubTopic" class="form-label">MQTT Topic</label>
-                <input id="iot-00-mqttSubTopic" name="iot-00-mqttSubTopic" class="form-input" type="text" required value="">
+                <label for="iot-00-mqttTopic" class="form-label">MQTT Send Topic</label>
+                <input id="iot-00-mqttTopic" name="iot-00-mqttTopic" class="form-input" type="text" required value="">
             <p>
-                <label for="iot-00-mqttDataOn" class="form-label">MQTT On Message</label>
+            <label for="select-iot-00-mqttTopicQos" class="form-label">MQTT Send Topic QoS</label>
+            <select id="select-iot-00-mqttTopicQos" onchange="updateHiddenInput('iot-00-mqttTopicQos')">
+                <option hidden disabled selected value> -- select an option -- </option>
+                <option value="0" >At Most Once</option>
+                <option value="1" >At Least Once</option>
+                <option value="2" >Exactly Once</option>
+            </select>
+            <input type="hidden" id="iot-00-mqttTopicQos" name="iot-00-mqttTopicQos" value="">
+            <p>
+            <label for="iot-00-mqttDataOn" class="form-label">MQTT On Message</label>
                 <input id="iot-00-mqttDataOn" name="iot-00-mqttDataOn" class="form-input" type="text" required value="">
             <p>
                 <label for="iot-00-mqttDataOff" class="form-label">MQTT Off Message</label>
                 <input id="iot-00-mqttDataOff" name="iot-00-mqttDataOff" class="form-input" type="text" required value="">
             <p>
+                <label for="iot-00-mqttSubscribe" class="form-label">MQTT Subscribe Topic</label>
+                <input id="iot-00-mqttSubscribe" name="iot-00-mqttSubscribe" class="form-input" type="text" required value="">
+            <p>
+            <label for="select-iot-00-mqttSubscribeQos" class="form-label">MQTT Subscribe Topic QoS</label>
+            <select id="select-iot-00-mqttSubscribeQos" onchange="updateHiddenInput('iot-00-mqttSubscribeQos')">
+                <option hidden disabled selected value> -- select an option -- </option>
+                <option value="0" >At Most Once</option>
+                <option value="1" >At Least Once</option>
+                <option value="2" >Exactly Once</option>
+            </select>
+            <input type="hidden" id="iot-00-mqttSubscribeQos" name="iot-00-mqttSubscribeQos" value="">
+            <p>
+
             <label for="select-iot-00-outPin" class="form-label">Output Pin</label>
             <select id="select-iot-00-outPin" onchange="updateHiddenInput('iot-00-outPin')">
                 <option hidden disabled selected value> -- select an option -- </option>

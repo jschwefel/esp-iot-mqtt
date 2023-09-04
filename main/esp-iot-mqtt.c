@@ -24,7 +24,7 @@ void app_main(void)
     iot_nvs_set_str_value(IOT_KEY_WIFI_PASS, "0101020221");
     iot_nvs_set_str_value(IOT_KEY_MQTT_BROKER , "homeassistant.local");
 */
-
+    
     if(gpio_get_level(GPIO_NUM_4)) {
         printf("GPIO 4 is held HI, loading dummy config....\n");
         iot_save_config(dummy_intiConfig());
