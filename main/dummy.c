@@ -22,7 +22,7 @@ iot_config_linked_list_t* dummy_intiConfig(void) {
         //jasonTest->intrType = GPIO_INTR_ANYEDGE;
         jasonTest->inputInvert = true;
         jasonTest->timerDelay = 5000;
-        jasonTest->mqttConfig->mqttTopic = "/JSONTest";
+        jasonTest->mqttConfig->mqttTopic = "JSONTest";
         jasonTest->mqttConfig->mqttTopicQos = IOT_MQTT_QOS_LEAST_ONCE;
         jasonTest->mqttConfig->mqttSubscribe = "NONE";
         jasonTest->mqttDataOn = "On";
@@ -45,7 +45,7 @@ iot_config_linked_list_t* dummy_intiConfig(void) {
         lindaTest->inputInvert = false;
         lindaTest->outPull = IOT_GPIO_PULL_DOWN;
         lindaTest->timerDelay = 500;
-        lindaTest->mqttConfig->mqttTopic = "/NopeNope";
+        lindaTest->mqttConfig->mqttTopic = "NopeNope";
         lindaTest->mqttConfig->mqttTopicQos = IOT_MQTT_QOS_MOST_ONCE;
         lindaTest->mqttConfig->mqttSubscribe = "NONE";
         lindaTest->mqttConfig->mqttSubscribeQos = IOT_MQTT_QOS_NO_TOPIC;

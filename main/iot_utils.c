@@ -27,7 +27,6 @@ uint32_t gpio_normailized_state(bool inverted, uint32_t gpioPin) {
 }
 
 char* concat(const char *s1, const char *s2) {
-    ESP_LOGW(TAG, "s1: %s\t\t\t\ts2: %s", s1, s2);
     char *result = malloc(strlen(s1) + strlen(s2) + 1); // +1 for the null-terminator
     // in real code you would check for errors in malloc here
     strcpy(result, s1);

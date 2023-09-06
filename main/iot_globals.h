@@ -22,5 +22,6 @@ extern QueueHandle_t simpleSwitchInreQueue;
 extern esp_mqtt_client_handle_t iotMqttClient;
 extern iot_wifi_conf_t iot_wifi_conf;
 extern hash_table_t* mqttSubscribeMap;
+extern int iot_gpio_array[GPIO_NUM_MAX];
 
 void iot_init(void);

@@ -61,9 +61,6 @@ typedef struct {
 
 
 
-
-
-
 typedef struct {
     char* intrTaskName;
     char* mqttSubTopic;

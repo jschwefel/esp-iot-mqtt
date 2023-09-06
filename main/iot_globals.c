@@ -14,7 +14,7 @@
 const char* TAG = "ESP-IOT-MQTT";
 
 //Need top convert this to configurable.
-const char* baseTopic = "/ESP-IOT-MQTT";
+const char* baseTopic = "ESP-IOT-MQTT/";
 
 //cJSON* iotConfiguration;
 nvs_handle_t iot_nvs_user_handle;
@@ -22,6 +22,9 @@ QueueHandle_t simpleSwitchInreQueue;
 esp_mqtt_client_handle_t iotMqttClient;
 iot_wifi_conf_t iot_wifi_conf;
 hash_table_t* mqttSubscribeMap;
+
+//For global storage of data. Sure there is better way, but for now...
+int iot_gpio_array[GPIO_NUM_MAX];
 
 void iot_init(void) {
     //iotConfiguration = cJSON_CreateObject();

@@ -124,7 +124,7 @@ static esp_err_t iot_settings_post_handler(httpd_req_t *req) {
 
     
     esp_restart();
-    return ESP_OK;
+    iot_init();
 }
 
 static esp_err_t post_handler(httpd_req_t *req)

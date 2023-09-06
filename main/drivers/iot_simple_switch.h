@@ -3,6 +3,7 @@
 #pragma once
 
 #include <stdbool.h>
+#include "mqtt_client.h"
 #include "driver/gpio.h"
 #include "../iot_defines.h"
 #include "../iot_enums.h"
@@ -16,4 +17,4 @@ cJSON* serialize_iot_intr_switch_simple_config(void* configItemPtr);
 iot_config_linked_list_t* deserialize_iot_intr_switch_simple_config(char* key, cJSON* configJson);
 iot_config_linked_list_t* deserialize_dummy(char* key, cJSON* configJson);
 iot_config_linked_list_t* iot_iot_settings_process_config_update_simple_switch(int sequence, char* queryString);
-void simple_switch_mqtt_subscribe_handler(void* data);
+void simple_switch_mqtt_subscribe_handler(void* data, esp_mqtt_event_t* event);
