@@ -11,6 +11,8 @@
 iot_config_linked_list_t* dummy_intiConfig(void) {
 
     iot_intr_switch_simple_config_t* jasonTest = calloc(1, sizeof(iot_intr_switch_simple_config_t));
+        jasonTest->mqttConfig = calloc(1, sizeof(iot_mqtt_config_t));
+        jasonTest->mqttConfig = calloc(1, sizeof(iot_mqtt_config_t));
         jasonTest->intrTaskName = "Task Inter 1";
         jasonTest->intrPin = GPIO_NUM_0;
         jasonTest->intrSimpleSwitchType = IOT_INTR_SWITCH_TOGGLE;
@@ -20,7 +22,9 @@ iot_config_linked_list_t* dummy_intiConfig(void) {
         //jasonTest->intrType = GPIO_INTR_ANYEDGE;
         jasonTest->inputInvert = true;
         jasonTest->timerDelay = 5000;
-        jasonTest->mqttSubTopic = "/JSONTest";
+        jasonTest->mqttConfig->mqttTopic = "JSONTest";
+        jasonTest->mqttConfig->mqttTopicQos = IOT_MQTT_QOS_LEAST_ONCE;
+        jasonTest->mqttConfig->mqttSubscribe = "NONE";
         jasonTest->mqttDataOn = "On";
         jasonTest->mqttDataOff = "Off";
 
@@ -31,6 +35,7 @@ iot_config_linked_list_t* dummy_intiConfig(void) {
 
 
     iot_intr_switch_simple_config_t* lindaTest = calloc(1, sizeof(iot_intr_switch_simple_config_t));
+        lindaTest->mqttConfig = calloc(1, sizeof(iot_mqtt_config_t));
         lindaTest->intrTaskName = "Task Inter 3";
         lindaTest->intrPin = GPIO_NUM_2;
         lindaTest->intrSimpleSwitchType = IOT_INTR_SWITCH_ONE_SHOT_POS;
@@ -40,7 +45,10 @@ iot_config_linked_list_t* dummy_intiConfig(void) {
         lindaTest->inputInvert = false;
         lindaTest->outPull = IOT_GPIO_PULL_DOWN;
         lindaTest->timerDelay = 500;
-        lindaTest->mqttSubTopic = "/NopeNope";
+        lindaTest->mqttConfig->mqttTopic = "NopeNope";
+        lindaTest->mqttConfig->mqttTopicQos = IOT_MQTT_QOS_MOST_ONCE;
+        lindaTest->mqttConfig->mqttSubscribe = "NONE";
+        lindaTest->mqttConfig->mqttSubscribeQos = IOT_MQTT_QOS_NO_TOPIC;
         lindaTest->mqttDataOn = "On";
         lindaTest->mqttDataOff = "Off";
     

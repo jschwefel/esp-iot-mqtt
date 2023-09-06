@@ -17,3 +17,5 @@ void stringSplitter(char *string, char *delimeter, char *tokenArray[]);
 void str_replace(char *target, const char *needle, const char *replacement);
 void spiffs_dir(char* directory);
 const char* get_filename_ext(const char *filename);
+
+//void iot_mqtt_callback_prototype(iot_mqtt_subscribe_callback_t* data);

@@ -28,7 +28,9 @@
         "hal.h": "c",
         "system.h": "c",
         "*.old": "c",
-        "urldecode.h": "c"
+        "urldecode.h": "c",
+        "gpio_filter.h": "c"
     },
-    "C_Cpp.errorSquiggles": "disabled"
+    "C_Cpp.errorSquiggles": "disabled",
+    "cmake.configureOnOpen": true
 }

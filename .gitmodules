@@ -1,6 +1,6 @@
-[submodule "UrlDecoder-C"]
-	path = UrlDecoder-C
-	url = git@github.com:swarajsatvaya/UrlDecoder-C.git
 [submodule "URLDecode"]
 	path = URLDecode
 	url = git@github.com:schwefeljm/URLDecode.git
+[submodule "Hash-Table"]
+	path = Hash-Table
+	url = git@github.com:schwefeljm/Hash-Table.git

@@ -5,6 +5,13 @@
 #include "driver/gpio.h"
 #include "esp_wifi.h"
 
+typedef struct {
+    char* mqttTopic;
+    iot_mqtt_qos_t mqttTopicQos;
+    char* mqttSubscribe;
+    iot_mqtt_qos_t mqttSubscribeQos;
+} iot_mqtt_config_t;
+
 // GPIO Simple Swith Interrupt
 typedef struct {
     char* intrTaskName;
@@ -13,12 +20,12 @@ typedef struct {
     iot_gpio_pull_t intrPull;
     gpio_int_type_t intrType; 
     iot_simple_switch_type_t intrSimpleSwitchType;
-    char* mqttSubTopic;
-    char* mqttDataOn;
-    char* mqttDataOff;
     gpio_num_t outPin;
     iot_gpio_pull_t outPull;
     uint32_t timerDelay;
+    iot_mqtt_config_t* mqttConfig;
+    char* mqttDataOn;
+    char* mqttDataOff; 
 } iot_intr_switch_simple_config_t;
 
 typedef struct {
@@ -47,8 +54,10 @@ typedef struct {
 } iot_wifi_conf_t;
 
 
-
-
+typedef struct {
+    void* callbackData;
+    void* callbackFunc;
+} iot_mqtt_subscribe_callback_t;
 
 
 
