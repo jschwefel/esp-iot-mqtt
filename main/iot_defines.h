@@ -40,3 +40,9 @@
 #define IOT_ISR_ONE_SHOT_OUT_PIN_DEFAULT_DELAY      250
 
 #define IOT_MQTT_SUBSCRIBE_NOT_SUPPORTED            "NOT SUPPORTED"
+
+
+#define STEP_MOTOR_RESOLUTION_HZ                    1000000 // 1MHz resolution
+
+#define IOT_STEPPER_ACCEL_STEPS_DIVOSOR             20
+#define IOT_STEPPER_ACCEL_SPEED_DIVOSOR             4

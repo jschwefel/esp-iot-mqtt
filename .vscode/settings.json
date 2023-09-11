@@ -32,5 +32,16 @@
         "gpio_filter.h": "c"
     },
     "C_Cpp.errorSquiggles": "disabled",
-    "cmake.configureOnOpen": true
+    "cmake.configureOnOpen": true,
+    "vsmqtt.brokerProfiles": [
+        {
+            "name": "deb002 MQTT",
+            "host": "172.31.1.132",
+            "port": 1883,
+            "clientId": "vsmqtt_client_726a",
+            "username": "mqtt_user",
+            "password": "mqtt_pass"
+
+        }
+    ]
 }

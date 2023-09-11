@@ -28,6 +28,26 @@ typedef struct {
     char* mqttDataOff; 
 } iot_intr_switch_simple_config_t;
 
+
+typedef struct {
+    char* stepperTaskName;
+    iot_stepper_driver_t stepperDriver;
+    gpio_num_t pinStep;
+    gpio_num_t pinDirection;
+    gpio_num_t pinEnable;
+    gpio_num_t pinMicroStep0;
+    gpio_num_t pinMicroStep1;
+    gpio_num_t pinMicroStep2;
+    //gpio_num_t pinMicroStep3;
+    int stepsPerRev;
+    gpio_num_t limitCW;
+    gpio_num_t limitCCW;
+    // For use when gear train (or wiring) reverses direction so CW is always CW
+    // CW will always be referened when looking at the shaft.
+    bool reverse;                           
+    iot_mqtt_config_t* mqttConfig;
+}   iot_stepper_config_t;
+
 typedef struct {
     iot_config_item_type_t configItemType;
     char* configKey;
@@ -59,6 +79,13 @@ typedef struct {
     void* callbackFunc;
 } iot_mqtt_subscribe_callback_t;
 
+typedef struct {
+    uint32_t stepsPerSecond;
+    uint32_t steps;
+    bool clockwise;
+    uint32_t microstepSetting;
+} iot_stepper_move_command_t;
+
 
 
 typedef struct {
@@ -75,4 +102,6 @@ typedef struct {
     uint32_t timerDelay;
     bool inputInvert;
 } dummy_config_t;
+
+
 
