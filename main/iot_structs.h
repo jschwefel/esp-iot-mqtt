@@ -80,6 +80,7 @@ typedef struct {
 } iot_mqtt_subscribe_callback_t;
 
 typedef struct {
+    
     uint32_t stepsPerSecond;
     uint32_t steps;
     bool clockwise;

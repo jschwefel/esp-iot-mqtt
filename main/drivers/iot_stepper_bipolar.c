@@ -19,7 +19,7 @@
 
 static char* set_stepper_resolution(int resolution, iot_stepper_config_t* configEntry);
 static void set_stepper_resolution_pins(iot_stepper_config_t* configEntry, int m0, int m1, int m2);
-static void run_stepper(rmt_channel_handle_t motorChan, iot_stepper_config_t* callbackData, iot_stepper_move_command_t command, bool running);
+static void run_stepper(rmt_channel_handle_t motorChan, iot_stepper_config_t* callbackData, iot_stepper_move_command_t command);
 void stepper_mqtt_subscribe_handler(void* data, esp_mqtt_event_t* event);
 static void  limit_isr_intr_handler(void* arg);
 static void linit_isr_task_queue_handler(void *params);
@@ -202,8 +202,10 @@ void stepper_mqtt_subscribe_handler(void* data, esp_mqtt_event_t* event) {
                 break;
             }
             set_stepper_resolution(command.microstepSetting, callbackData);
+            ESP_LOGI(TAG, "Stepper Start");
+            run_stepper(*motorChan, callbackData, command);
             
-            run_stepper(*motorChan, callbackData, command, true);
+            ESP_LOGI(TAG, "Stepper End");
         }
         rmt_disable(*motorChan);
         //gpio_set_level(callbackData->pinEnable, false);
@@ -213,37 +215,10 @@ void stepper_mqtt_subscribe_handler(void* data, esp_mqtt_event_t* event) {
 }
 
 
-static void run_stepper(rmt_channel_handle_t motorChan, iot_stepper_config_t* callbackData, iot_stepper_move_command_t command, bool running) {
-
-    int stepsTemp = command.steps;
-/*  Shelving accel logic for now.
-    if(!running) {
-        uint32_t accelSpeedStart = (uint32_t)(command.stepsPerSecond / IOT_STEPPER_ACCEL_SPEED_DIVOSOR);
-        uint32_t accelSteps = (uint32_t)(command.steps / IOT_STEPPER_ACCEL_STEPS_DIVOSOR);
-        stepsTemp = stepsTemp - accelSteps;
-
-        stepper_motor_curve_encoder_config_t accel_encoder_config = {
-            .resolution = STEP_MOTOR_RESOLUTION_HZ,
-            .sample_points = accelSteps,
-            .start_freq_hz = accelSpeedStart,
-            .end_freq_hz = command.stepsPerSecond,
-        };
-
-        rmt_encoder_handle_t accel_motor_encoder = NULL;
-        ESP_ERROR_CHECK(rmt_new_stepper_motor_curve_encoder(&accel_encoder_config, &accel_motor_encoder));
-
-        rmt_transmit_config_t accel_tx_config = {
-            .loop_count = 0,
-        };
-
-
-        uint32_t accel_samples = 0;
-        ESP_ERROR_CHECK(rmt_transmit(motorChan, accel_motor_encoder, &accel_samples, sizeof(accel_samples), &accel_tx_config));
-    }
-*/
-
+static void run_stepper(rmt_channel_handle_t motorChan, iot_stepper_config_t* callbackData, iot_stepper_move_command_t command) {
+    
     rmt_transmit_config_t uniform_tx_config = {
-        .loop_count = stepsTemp,
+        .loop_count = command.steps,
     };
     bool normalizedDirection = false;
     if(callbackData->reverse) {
@@ -252,7 +227,7 @@ static void run_stepper(rmt_channel_handle_t motorChan, iot_stepper_config_t* ca
         normalizedDirection = !command.clockwise;
     }
     //printf("CW: %d\tReverse: %d\tXOR: %d\n\n", command.clockwise, callbackData->reverse, normalizedDirection);
-
+    
     gpio_set_level(callbackData->pinDirection, normalizedDirection);
     ESP_ERROR_CHECK(rmt_transmit(motorChan, uniformMotorEncoder, &command.stepsPerSecond, sizeof(command.stepsPerSecond), &uniform_tx_config));
     ESP_ERROR_CHECK(rmt_tx_wait_all_done(motorChan, -1));
