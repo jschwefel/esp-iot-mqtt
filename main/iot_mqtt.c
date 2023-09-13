@@ -39,6 +39,7 @@ static void mqtt_app_start(void)
         .broker.address.uri = "mqtt://172.31.1.132",
         .credentials.username = "mqtt_user",
         .credentials.authentication.password = "mqtt_pass",
+        .buffer.size = 16000,
     };
 
     iotMqttClient = esp_mqtt_client_init(&mqtt_cfg);
@@ -101,8 +102,9 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
 }
 
 static void run_mqtt_callback(esp_mqtt_event_t* event) {
-    char* subscribeTopic = concat(baseTopic, event->topic);
-    iot_mqtt_subscribe_callback_t* callback = iot_mqtt_subscribe_get(subscribeTopic);
+    char* topic = calloc(1, sizeof(char) * event->topic_len);
+    strcpy(topic, event->topic);
+    iot_mqtt_subscribe_callback_t* callback = iot_mqtt_subscribe_get(topic);
     void (*mqttCallback)(void*, esp_mqtt_event_t*) = callback->callbackFunc;
     mqttCallback(callback->callbackData, event);
 }

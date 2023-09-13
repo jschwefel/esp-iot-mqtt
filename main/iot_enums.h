@@ -38,3 +38,14 @@ typedef enum {
     IOT_MQTT_QOS_ONLY_ONCE =        3,
     
 } iot_mqtt_qos_t;
+
+
+typedef enum {
+    IOT_STEPPER_NONE =              0,
+    IOT_STEPPER_A4988 =             1,
+    IOT_STEPPER_DRV8825 =           2,
+    IOT_STEPPER_LV8729 =            3,
+    IOT_STEPPER_THB6128 =           3,
+    IOT_STEPPER_RESP128 =           3,
+
+} iot_stepper_driver_t;
