@@ -92,7 +92,7 @@ static void iot_gpio_isr_task_queue_handler(void *params) // xTaskCreate
     while(true) {
         iot_intr_switch_simple_config_t* intrParams = malloc(sizeof(iot_intr_switch_simple_config_t));
         //intrParams->mqttConfig = calloc(1, sizeof(iot_mqtt_config_t));
-        ESP_LOGI(TAG, "Waiting on interrupt queue");
+        ESP_LOGI(TAG, "Waiting on Simple Switch interrupt queue");
 		BaseType_t rc = xQueueReceive(simpleSwitchInreQueue, intrParams, portMAX_DELAY);
         ESP_LOGW(TAG, "%d", intrParams->intrSimpleSwitchType);
         switch(intrParams->intrSimpleSwitchType) {
@@ -108,6 +108,7 @@ static void iot_gpio_isr_task_queue_handler(void *params) // xTaskCreate
                 break;
         }
 		ESP_LOGI(TAG, "Woke from interrupt queue wait: %d on GPIO: %i", rc, intrParams->intrPin);
+        free(intrParams);
     }
 }
 

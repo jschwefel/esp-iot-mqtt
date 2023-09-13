@@ -15,8 +15,6 @@
 #include "../iot_mqtt.h"
 #include "driver/gpio_filter.h"
 
-
-
 static char* set_stepper_resolution(int resolution, iot_stepper_config_t* configEntry);
 static void set_stepper_resolution_pins(iot_stepper_config_t* configEntry, int m0, int m1, int m2);
 static void run_stepper(rmt_channel_handle_t motorChan, iot_stepper_config_t* callbackData, iot_stepper_move_command_t command);
@@ -141,9 +139,6 @@ bool iot_mqtt_configure(iot_stepper_config_t* configEntry) {
     };
     ESP_ERROR_CHECK(rmt_new_tx_channel(&tx_chan_config, motorChan));
 
-    ESP_LOGI(TAG, "Enable RMT channel");
-    //ESP_ERROR_CHECK(rmt_enable(*motorChan));
-
     // Place pointer for RMT motor transmit channel handle
     // in iot_gpio_array using index of pinStep.
     iot_gpio_array[configEntry->pinStep] = (int)motorChan;
@@ -159,79 +154,81 @@ bool iot_mqtt_configure(iot_stepper_config_t* configEntry) {
 
     iot_stepper_limit_setup(configEntry, motorChan);
 
-
     return ret;
 }
 
 
 void stepper_mqtt_subscribe_handler(void* data, esp_mqtt_event_t* event) {
-
     iot_stepper_config_t* callbackData = (iot_stepper_config_t*)data;
     printf("%s\n", callbackData->stepperTaskName);
     rmt_channel_handle_t* motorChan = (rmt_channel_handle_t*)iot_gpio_array[callbackData->pinStep];
 
-//    char* jsonData = calloc(1, event->data_len + 1);
-//    strcpy(jsonData, event->data);
-
     cJSON* object = cJSON_Parse(event->data);
-
     if(cJSON_HasObjectItem(object, "stepperCommands")) {
-        //gpio_set_level(callbackData->pinEnable, true);
-        rmt_enable(*motorChan);
-        cJSON* stepperCommandsArray = cJSON_GetObjectItem(object, "stepperCommands");
-        
-        for (int i = 0 ; i < cJSON_GetArraySize(stepperCommandsArray) ; i++) {
-            cJSON* stepperCommand = cJSON_GetArrayItem(stepperCommandsArray, i);
-            printf("\n------- Command %d -------\n", i);
-            printf("Steps Per Second: %d\n", cJSON_GetObjectItem(stepperCommand, "stepsPerSecond")->valueint);
-            printf("Steps:            %d\n", cJSON_GetObjectItem(stepperCommand, "steps")->valueint);
-            printf("Clockwise:        %s\n", cJSON_IsTrue(cJSON_GetObjectItem(stepperCommand, "clockwise")) == true ? "true" : "false");
-            printf("MicrostepSetting: %d\n", cJSON_GetObjectItem(stepperCommand, "microstepSetting")->valueint);
-            printf("--------------------------\n\n\n");
+        char* move = "move";
+        char* wait = "wait";
+        if(cJSON_HasObjectItem(object, "stepperCommands")){
 
-            iot_stepper_move_command_t command = {
-                .stepsPerSecond = cJSON_GetObjectItem(stepperCommand, "stepsPerSecond")->valueint,
-                .steps = cJSON_GetObjectItem(stepperCommand, "steps")->valueint,
-                .clockwise = cJSON_IsTrue(cJSON_GetObjectItem(stepperCommand, "clockwise")) == true ? true : false,
-                .microstepSetting = cJSON_GetObjectItem(stepperCommand, "microstepSetting")->valueint
-            };
+            cJSON* stepperCommandsArray = cJSON_GetObjectItem(object, "stepperCommands");
+            if(cJSON_IsArray(stepperCommandsArray)) {
+                for (int i = 0 ; i < cJSON_GetArraySize(stepperCommandsArray) ; i++) {
+                    cJSON* stepperCommand = cJSON_GetArrayItem(stepperCommandsArray, i);
+                    if(cJSON_HasObjectItem(stepperCommand, "type")) {
+                        char* type = cJSON_GetObjectItem(stepperCommand, "type")->valuestring;
+                        if(strcmp(type, move) == 0) {
+                            iot_stepper_move_command_t command = {
+                                .stepsPerSecond = cJSON_GetObjectItem(stepperCommand, "stepsPerSecond")->valueint,
+                                .steps = cJSON_GetObjectItem(stepperCommand, "steps")->valueint,
+                                .clockwise = cJSON_IsTrue(cJSON_GetObjectItem(stepperCommand, "clockwise")) == true ? true : false,
+                                .microstepSetting = cJSON_GetObjectItem(stepperCommand, "microstepSetting")->valueint
+                            };
+                            bool notLimitCW = !gpio_get_level(callbackData->limitCW);
+                            bool notLimitCCW = !gpio_get_level(callbackData->limitCCW);
 
+                            set_stepper_resolution(command.microstepSetting, callbackData);
+                            if((notLimitCCW & !command.clockwise)) {
+                                rmt_enable(*motorChan);
+                                run_stepper(*motorChan, callbackData, command);
+                                rmt_disable(*motorChan);
+                            }
+                            if((notLimitCW & command.clockwise)) {
+                                rmt_enable(*motorChan);
+                                run_stepper(*motorChan, callbackData, command);
+                                rmt_disable(*motorChan);
+                            }
 
-
-            if((callbackData->limitCW & command.clockwise) | (callbackData->limitCCW & !command.clockwise)) {
-                break;
+                        } else if (strcmp(type, wait) == 0) {
+                            int delay = cJSON_GetObjectItem(stepperCommand, "duration")->valueint;
+                            vTaskDelay(delay / portTICK_PERIOD_MS);
+                        }
+                    }
+                }
+            } else {
+                ESP_LOGI(TAG, "stepperCommand JSON array not found.");
             }
-            set_stepper_resolution(command.microstepSetting, callbackData);
-            ESP_LOGI(TAG, "Stepper Start");
-            run_stepper(*motorChan, callbackData, command);
-            
-            ESP_LOGI(TAG, "Stepper End");
+
+        } else {
+            ESP_LOGI(TAG, "stepperCommand JSON object not found.");
         }
-        rmt_disable(*motorChan);
-        //gpio_set_level(callbackData->pinEnable, false);
     }
-
-
 }
 
 
 static void run_stepper(rmt_channel_handle_t motorChan, iot_stepper_config_t* callbackData, iot_stepper_move_command_t command) {
-    
     rmt_transmit_config_t uniform_tx_config = {
         .loop_count = command.steps,
     };
+
     bool normalizedDirection = false;
     if(callbackData->reverse) {
         normalizedDirection = command.clockwise;
     } else {
         normalizedDirection = !command.clockwise;
     }
-    //printf("CW: %d\tReverse: %d\tXOR: %d\n\n", command.clockwise, callbackData->reverse, normalizedDirection);
     
     gpio_set_level(callbackData->pinDirection, normalizedDirection);
     ESP_ERROR_CHECK(rmt_transmit(motorChan, uniformMotorEncoder, &command.stepsPerSecond, sizeof(command.stepsPerSecond), &uniform_tx_config));
     ESP_ERROR_CHECK(rmt_tx_wait_all_done(motorChan, -1));
-    
 }
 
 
@@ -241,19 +238,43 @@ static esp_err_t iot_stepper_limit_setup(iot_stepper_config_t* configEntry, rmt_
         .mode = GPIO_MODE_INPUT,
         .pull_down_en = true,
         .pull_up_en = false,
-        .intr_type = GPIO_INTR_HIGH_LEVEL,
+        .intr_type = GPIO_INTR_POSEDGE,
     };
     ESP_ERROR_CHECK(gpio_config(&limitPinConfig));
     stepper_limit_glitch_setup(configEntry->limitCW);
     stepper_limit_glitch_setup(configEntry->limitCCW);
 
 
-    gpio_isr_handler_add((uint32_t)configEntry->limitCW, limit_isr_intr_handler, configEntry);
-    xTaskCreate(linit_isr_task_queue_handler, configEntry->stepperTaskName, 2048, motorChan, 10, NULL);
+    gpio_isr_handler_add((uint32_t)configEntry->limitCW, limit_isr_intr_handler, motorChan);
+    xTaskCreate(linit_isr_task_queue_handler, concat(configEntry->stepperTaskName, "-CW"), 2048, motorChan, 35, NULL);
+    ESP_LOGD(TAG, "Interrupt Queue Created");
+
+    gpio_isr_handler_add((uint32_t)configEntry->limitCCW, limit_isr_intr_handler, motorChan);
+    xTaskCreate(linit_isr_task_queue_handler, concat(configEntry->stepperTaskName, "-CCW"), 2048, motorChan, 35, NULL);
     ESP_LOGD(TAG, "Interrupt Queue Created");
     
     return ESP_OK;
 }
+
+
+static void  limit_isr_intr_handler(void* arg) {
+  	rmt_channel_handle_t motorChan = (rmt_channel_handle_t) arg;
+	xQueueSendToBackFromISR(stepperLimitIntrQueue, motorChan, NULL);
+}
+
+
+static void linit_isr_task_queue_handler(void *params) // xTaskCreate
+{
+    while(true) {
+        rmt_channel_handle_t* motorChan = malloc(sizeof(rmt_channel_handle_t));
+        ESP_LOGI(TAG, "Waiting on MQTT interrupt queue");
+		xQueueReceive(stepperLimitIntrQueue, motorChan, portMAX_DELAY);
+        printf("Limit Reached.\n");
+        rmt_disable(*motorChan);
+        free(motorChan);
+    }
+}
+
 
 static void stepper_limit_glitch_setup(gpio_num_t limitGpio) {
     // Configure GLitch Filter on interrupt pin.
@@ -263,20 +284,4 @@ static void stepper_limit_glitch_setup(gpio_num_t limitGpio) {
     gpio_glitch_filter_handle_t* glitchFilter = malloc(sizeof(gpio_glitch_filter_handle_t));
     ESP_ERROR_CHECK(gpio_new_pin_glitch_filter(glitchFilterConfig, glitchFilter));
     ESP_ERROR_CHECK(gpio_glitch_filter_enable(*glitchFilter));
-}
-
-static void  limit_isr_intr_handler(void* arg) {
-  	rmt_channel_handle_t* configEntry = (rmt_channel_handle_t*) arg;
-	xQueueSendToBackFromISR(stepperLimitIntrQueue, configEntry, NULL);
-}
-
-
-static void linit_isr_task_queue_handler(void *params) // xTaskCreate
-{
-    while(true) {
-        rmt_channel_handle_t* motorChan = malloc(sizeof(rmt_channel_handle_t));
-        ESP_LOGI(TAG, "Waiting on interrupt queue");
-		xQueueReceive(stepperLimitIntrQueue, motorChan, portMAX_DELAY);
-        rmt_disable(*motorChan);
-    }
 }
